@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Validation Result</title>
+
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -13,7 +14,6 @@
         text-align: center;
     }
 
-    /* Full width header */
     .header {
         background-color: #4CAF50;
         color: white;
@@ -21,10 +21,12 @@
         width: 100%;
         box-sizing: border-box;
     }
+
     .header h1 {
         margin: 0;
         font-size: 2.5em;
     }
+
     .header p {
         margin: 5px 0 0;
         font-size: 1.2em;
@@ -35,7 +37,6 @@
         margin: 20px 0;
     }
 
-    /* First logo (stamp) slightly smaller */
     .authentic {
         max-width: 300px;
         margin: 20px auto;
@@ -47,11 +48,11 @@
         text-align: left;
         font-size: 1.1em;
     }
+
     .details p {
         margin: 10px 0;
     }
 
-    /* Last three logos horizontal */
     .logos {
         display: flex;
         justify-content: center;
@@ -59,6 +60,7 @@
         gap: 30px;
         margin: 30px 0;
     }
+
     .logo {
         max-height: 60px;
         max-width: 60px;
@@ -66,37 +68,58 @@
     }
 </style>
 </head>
+
 <body>
-    <div class="header">
-        <h1>Validation Result</h1>
-        <p>Rudraksh Gems Testing Lab.</p>
-    </div>
 
-    <div class="found">Found</div>
+<div class="header">
+    <h1>Validation Result</h1>
+    <p>Rudraksh Gems Testing Lab.</p>
+</div>
 
-    <!-- Authentic Stamp (Slightly smaller) -->
-    <img src="Authentic.jpg" alt="Authentic Stamp" class="authentic">
+<div class="found">Found</div>
 
-    <div class="details">
-        <p><strong>Certificate No</strong> - C3200411R268348</p>
-        <p><strong>Item Name</strong> - Natural 1 Face Rudraksha</p>
-        <p><strong>Weight</strong> - 4.05</p>
-        <p><strong>Shape and Cut</strong> - Half moon shape</p>
-        <p><strong>Color</strong> - Brown</p>
-        <p><strong>Measurement</strong> - 28.13 x 13.59 x 13.32</p>
-        <p><strong>Mount</strong> - Mounted</p>
-        <p><strong>Natural Faces</strong> - One (1)</p>
-        <p><strong>Xrays</strong> - Internally same structure</p>
-        <p><strong>Created Faces</strong> - None</p>
-        <p><strong>Test</strong> - Microscopic observation</p>
-        <p><strong>Comments</strong> - One face seen in microscope</p>
-    </div>
+<img src="Authentic.jpg" alt="Authentic Stamp" class="authentic">
 
-    <!-- Logos horizontal -->
-    <div class="logos">
-        <img src="Iso.jpg" alt="ISO 9001:2015 Certified Company" class="logo">
-        <img src="Iaf.png" alt="Member of Multilateral IAF Recognition Arrangement" class="logo">
-        <img src="Ias.jpg" alt="IAS International Accreditation Service" class="logo">
-    </div>
+<div class="details">
+    <p><strong>Certificate No</strong> - <span id="cert">Loading...</span></p>
+    <p><strong>Item Name</strong> - Natural 1 Face Rudraksha</p>
+    <p><strong>Weight</strong> - <span id="weight">Loading...</span></p>
+    <p><strong>Shape and Cut</strong> - Half moon shape</p>
+    <p><strong>Color</strong> - Brown</p>
+    <p><strong>Measurement</strong> - <span id="measurement">Loading...</span></p>
+    <p><strong>Mount</strong> - Mounted</p>
+    <p><strong>Natural Faces</strong> - One (1)</p>
+    <p><strong>Xrays</strong> - Internally same structure</p>
+    <p><strong>Created Faces</strong> - None</p>
+    <p><strong>Test</strong> - Microscopic observation</p>
+    <p><strong>Comments</strong> - One face seen in microscope</p>
+</div>
+
+<div class="logos">
+    <img src="Iso.jpg" class="logo">
+    <img src="Iaf.png" class="logo">
+    <img src="Ias.jpg" class="logo">
+</div>
+
+<!-- 🔥 JavaScript for Dynamic Data -->
+<script>
+
+function getParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
+
+// Set values from URL
+document.getElementById("cert").textContent =
+    getParam("cert") || "Not Provided";
+
+document.getElementById("weight").textContent =
+    getParam("weight") || "Not Provided";
+
+document.getElementById("measurement").textContent =
+    getParam("measurement") || "Not Provided";
+
+</script>
+
 </body>
 </html>
