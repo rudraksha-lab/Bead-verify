@@ -37,14 +37,12 @@
         margin: 20px 0;
     }
 
-    /* Bead Image */
     .bead-image {
-        max-width: 200px;  /* adjust size */
+        max-width: 200px;
         margin: 20px auto;
         display: block;
     }
 
-    /* Authentic stamp */
     .authentic {
         max-width: 300px;
         margin: 20px auto;
@@ -94,17 +92,17 @@
 
 <div class="details">
     <p><strong>Certificate No</strong> - <span id="cert">Loading...</span></p>
-    <p><strong>Item Name</strong> - Natural 1 Face Rudraksha</p>
+    <p><strong>Item Name</strong> - <span id="itemName">Natural 1 Face Rudraksha</span></p>
     <p><strong>Weight</strong> - <span id="weight">Loading...</span></p>
-    <p><strong>Shape and Cut</strong> - Half moon shape</p>
-    <p><strong>Color</strong> - Brown</p>
+    <p><strong>Shape and Cut</strong> - <span id="shape">Half moon shape</span></p>
+    <p><strong>Color</strong> - <span id="color">Brown</span></p>
     <p><strong>Measurement</strong> - <span id="measurement">Loading...</span></p>
-    <p><strong>Mount</strong> - Mounted</p>
-    <p><strong>Natural Faces</strong> - One (1)</p>
-    <p><strong>Xrays</strong> - Internally same structure</p>
-    <p><strong>Created Faces</strong> - None</p>
-    <p><strong>Test</strong> - Microscopic observation</p>
-    <p><strong>Comments</strong> - One face seen in microscope</p>
+    <p><strong>Mount</strong> - <span id="mount">Mounted</span></p>
+    <p><strong>Natural Faces</strong> - <span id="faces">1</span></p>
+    <p><strong>Xrays</strong> - <span id="xrays">Internally same structure</span></p>
+    <p><strong>Created Faces</strong> - <span id="createdFaces">None</span></p>
+    <p><strong>Test</strong> - <span id="test">Microscopic observation</span></p>
+    <p><strong>Comments</strong> - <span id="comments">One face seen in microscope</span></p>
 </div>
 
 <div class="logos">
@@ -113,33 +111,40 @@
     <img src="Ias.jpg" class="logo">
 </div>
 
-<!-- 🔥 JavaScript for Dynamic Data and Bead Image -->
 <script>
-
 function getParam(param) {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
 }
 
 // Dynamic text values
-document.getElementById("cert").textContent =
-    getParam("cert") || "Not Provided";
-
-document.getElementById("weight").textContent =
-    getParam("weight") || "Not Provided";
-
-document.getElementById("measurement").textContent =
-    getParam("measurement") || "Not Provided";
+document.getElementById("cert").textContent = getParam("cert") || "Not Provided";
+document.getElementById("weight").textContent = getParam("weight") || "Not Provided";
+document.getElementById("measurement").textContent = getParam("measurement") || "Not Provided";
+document.getElementById("faces").textContent = getParam("faces") || "1";
 
 // Dynamic bead image
-const beadFile = getParam("img"); // e.g., bead1.jpg
+const beadFile = getParam("img"); // e.g., images/bead001.jpg
 if(beadFile){
     const beadImg = document.getElementById("beadImage");
     beadImg.src = beadFile;
     beadImg.alt = `Bead Image - ${beadFile}`;
 } else {
-    document.getElementById("beadImage").style.display = "none"; // hide if not provided
+    document.getElementById("beadImage").style.display = "none"; 
 }
+
+// Dynamic additional fields based on mukhi/type
+document.getElementById("itemName").textContent = getParam("itemName") || "Natural 1 Face Rudraksha";
+document.getElementById("shape").textContent = getParam("shape") || "Half moon shape";
+document.getElementById("faces").textContent = getParam("faces") || "1";
+document.getElementById("comments").textContent = getParam("comments") || "One face seen in microscope";
+
+// Optional fields you can also make dynamic
+document.getElementById("color").textContent = getParam("color") || "Brown";
+document.getElementById("mount").textContent = getParam("mount") || "Mounted";
+document.getElementById("xrays").textContent = getParam("xrays") || "Internally same structure";
+document.getElementById("createdFaces").textContent = getParam("createdFaces") || "None";
+document.getElementById("test").textContent = getParam("test") || "Microscopic observation";
 
 </script>
 
