@@ -37,6 +37,14 @@
         margin: 20px 0;
     }
 
+    /* Bead Image */
+    .bead-image {
+        max-width: 200px;  /* adjust size */
+        margin: 20px auto;
+        display: block;
+    }
+
+    /* Authentic stamp */
     .authentic {
         max-width: 300px;
         margin: 20px auto;
@@ -78,6 +86,10 @@
 
 <div class="found">Found</div>
 
+<!-- Dynamic Bead Image -->
+<img id="beadImage" class="bead-image" alt="Bead Image" src="" loading="lazy">
+
+<!-- Authentic Stamp -->
 <img src="Authentic.jpg" alt="Authentic Stamp" class="authentic">
 
 <div class="details">
@@ -101,7 +113,7 @@
     <img src="Ias.jpg" class="logo">
 </div>
 
-<!-- 🔥 JavaScript for Dynamic Data -->
+<!-- 🔥 JavaScript for Dynamic Data and Bead Image -->
 <script>
 
 function getParam(param) {
@@ -109,7 +121,7 @@ function getParam(param) {
     return urlParams.get(param);
 }
 
-// Set values from URL
+// Dynamic text values
 document.getElementById("cert").textContent =
     getParam("cert") || "Not Provided";
 
@@ -118,6 +130,16 @@ document.getElementById("weight").textContent =
 
 document.getElementById("measurement").textContent =
     getParam("measurement") || "Not Provided";
+
+// Dynamic bead image
+const beadFile = getParam("img"); // e.g., bead1.jpg
+if(beadFile){
+    const beadImg = document.getElementById("beadImage");
+    beadImg.src = beadFile;
+    beadImg.alt = `Bead Image - ${beadFile}`;
+} else {
+    document.getElementById("beadImage").style.display = "none"; // hide if not provided
+}
 
 </script>
 
