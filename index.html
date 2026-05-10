@@ -92,16 +92,29 @@
 
 <div class="details">
     <p><strong>Certificate No</strong> - <span id="cert">Loading...</span></p>
+
+    <!-- ITEM NAME DYNAMIC -->
     <p><strong>Item Name</strong> - <span id="itemName">Loading...</span></p>
+
     <p><strong>Weight</strong> - <span id="weight">Loading...</span></p>
+
     <p><strong>Shape and Cut</strong> - <span id="shape">Loading...</span></p>
+
     <p><strong>Color</strong> - <span id="color">Loading...</span></p>
+
     <p><strong>Measurement</strong> - <span id="measurement">Loading...</span></p>
+
     <p><strong>Mount</strong> - <span id="mount">Loading...</span></p>
+
+    <!-- NATURAL FACES DYNAMIC -->
     <p><strong>Natural Faces</strong> - <span id="faces">Loading...</span></p>
+
     <p><strong>Xrays</strong> - <span id="xrays">Loading...</span></p>
+
     <p><strong>Created Faces</strong> - <span id="createdFaces">Loading...</span></p>
+
     <p><strong>Test</strong> - <span id="test">Loading...</span></p>
+
     <p><strong>Comments</strong> - <span id="comments">Loading...</span></p>
 </div>
 
@@ -112,19 +125,24 @@
 </div>
 
 <script>
+
+/* -----------------------------
+   GET URL PARAMETERS
+------------------------------ */
+
 function getParam(param) {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get(param);
 }
 
 /* -----------------------------
-   Dynamic Faces / Mukhi System
+   DYNAMIC MUKHI / FACES
 ------------------------------ */
 
 const faces = getParam("faces") || "1";
 
 /* -----------------------------
-   Main Dynamic Fields
+   MAIN FIELDS
 ------------------------------ */
 
 document.getElementById("cert").textContent =
@@ -136,29 +154,23 @@ document.getElementById("weight").textContent =
 document.getElementById("measurement").textContent =
     getParam("measurement") || "Not Provided";
 
-document.getElementById("faces").textContent =
-    faces;
-
 /* -----------------------------
-   Dynamic Bead Image
------------------------------- */
-
-const beadFile = getParam("img");
-
-if (beadFile) {
-    const beadImg = document.getElementById("beadImage");
-    beadImg.src = beadFile;
-    beadImg.alt = `Bead Image - ${beadFile}`;
-} else {
-    document.getElementById("beadImage").style.display = "none";
-}
-
-/* -----------------------------
-   Auto Dynamic Mukhi Details
+   ITEM NAME AUTO CHANGES
 ------------------------------ */
 
 document.getElementById("itemName").textContent =
     getParam("itemName") || `Natural ${faces} Face Rudraksha`;
+
+/* -----------------------------
+   NATURAL FACES AUTO CHANGES
+------------------------------ */
+
+document.getElementById("faces").textContent =
+    faces;
+
+/* -----------------------------
+   SHAPE + COMMENTS
+------------------------------ */
 
 document.getElementById("shape").textContent =
     getParam("shape") || "Half moon shape";
@@ -167,7 +179,7 @@ document.getElementById("comments").textContent =
     getParam("comments") || `${faces} face seen in microscope`;
 
 /* -----------------------------
-   Optional Dynamic Fields
+   OPTIONAL FIELDS
 ------------------------------ */
 
 document.getElementById("color").textContent =
@@ -184,6 +196,20 @@ document.getElementById("createdFaces").textContent =
 
 document.getElementById("test").textContent =
     getParam("test") || "Microscopic observation";
+
+/* -----------------------------
+   DYNAMIC BEAD IMAGE
+------------------------------ */
+
+const beadFile = getParam("img");
+
+if (beadFile) {
+    const beadImg = document.getElementById("beadImage");
+    beadImg.src = beadFile;
+    beadImg.alt = `Bead Image - ${beadFile}`;
+} else {
+    document.getElementById("beadImage").style.display = "none";
+}
 
 </script>
 
