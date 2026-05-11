@@ -6,209 +6,241 @@
 <title>Validation Result</title>
 
 <style>
-    body {
+
+    body{
         font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: white;
-        text-align: center;
+        margin:0;
+        padding:0;
+        background:white;
+        text-align:center;
     }
 
-    .header {
-        background-color: #4CAF50;
-        color: white;
-        padding: 20px;
-        width: 100%;
-        box-sizing: border-box;
+    .header{
+        background:#4CAF50;
+        color:white;
+        padding:20px;
     }
 
-    .header h1 {
-        margin: 0;
-        font-size: 2.5em;
+    .header h1{
+        margin:0;
+        font-size:2.5em;
     }
 
-    .header p {
-        margin: 5px 0 0;
-        font-size: 1.2em;
+    .header p{
+        margin-top:5px;
+        font-size:1.1em;
     }
 
-    .found {
-        font-size: 2em;
-        margin: 20px 0;
+    .found{
+        font-size:2em;
+        margin:20px 0;
+        font-weight:bold;
     }
 
-    .bead-image {
-        max-width: 200px;
-        margin: 20px auto;
-        display: block;
+    .bead-image{
+        max-width:220px;
+        margin:20px auto;
+        display:block;
     }
 
-    .authentic {
-        max-width: 300px;
-        margin: 20px auto;
+    .authentic{
+        max-width:300px;
+        margin:20px auto;
+        display:block;
     }
 
-    .details {
-        max-width: 400px;
-        margin: 0 auto;
-        text-align: left;
-        font-size: 1.1em;
+    .details{
+        max-width:450px;
+        margin:auto;
+        text-align:left;
+        padding:20px;
+        font-size:1.05em;
     }
 
-    .details p {
-        margin: 10px 0;
+    .details p{
+        margin:12px 0;
     }
 
-    .logos {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 30px;
-        margin: 30px 0;
+    .logos{
+        display:flex;
+        justify-content:center;
+        gap:25px;
+        margin:30px 0;
+        flex-wrap:wrap;
     }
 
-    .logo {
-        max-height: 80px;
-        max-width: 80px;
-        object-fit: contain;
+    .logo{
+        max-width:80px;
+        max-height:80px;
+        object-fit:contain;
     }
+
 </style>
 </head>
 
 <body>
 
+<!-- HEADER -->
+
 <div class="header">
-    <h1>Validation Result</h1>
-    <p>Rudraksh Gems Testing Lab.</p>
+    <h1 id="title">Validation Result</h1>
+    <p id="labName">Rudraksh Gems Testing Lab.</p>
 </div>
 
-<div class="found">Found</div>
+<div class="found" id="status">Found</div>
 
-<!-- Dynamic Bead Image -->
-<img id="beadImage" class="bead-image" alt="Bead Image" src="" loading="lazy">
+<!-- DYNAMIC BEAD IMAGE -->
 
-<!-- Authentic Stamp -->
-<img src="Authentic.jpg" alt="Authentic Stamp" class="authentic">
+<img id="beadImage" class="bead-image" src="" alt="Bead Image">
+
+<!-- AUTHENTIC IMAGE -->
+
+<img src="Authentic.jpg" class="authentic" alt="Authentic Stamp">
+
+<!-- DETAILS -->
 
 <div class="details">
-    <p><strong>Certificate No</strong> - <span id="cert">Loading...</span></p>
 
-    <!-- ITEM NAME DYNAMIC -->
-    <p><strong>Item Name</strong> - <span id="itemName">Loading...</span></p>
+    <p><strong>Certificate No</strong> - <span id="cert"></span></p>
 
-    <p><strong>Weight</strong> - <span id="weight">Loading...</span></p>
+    <p><strong>Item Name</strong> - <span id="itemName"></span></p>
 
-    <p><strong>Shape and Cut</strong> - <span id="shape">Loading...</span></p>
+    <p><strong>Weight</strong> - <span id="weight"></span></p>
 
-    <p><strong>Color</strong> - <span id="color">Loading...</span></p>
+    <p><strong>Shape and Cut</strong> - <span id="shape"></span></p>
 
-    <p><strong>Measurement</strong> - <span id="measurement">Loading...</span></p>
+    <p><strong>Color</strong> - <span id="color"></span></p>
 
-    <p><strong>Mount</strong> - <span id="mount">Loading...</span></p>
+    <p><strong>Measurement</strong> - <span id="measurement"></span></p>
 
-    <!-- NATURAL FACES DYNAMIC -->
-    <p><strong>Natural Faces</strong> - <span id="faces">Loading...</span></p>
+    <p><strong>Mount</strong> - <span id="mount"></span></p>
 
-    <p><strong>Xrays</strong> - <span id="xrays">Loading...</span></p>
+    <p><strong>Natural Faces</strong> - <span id="faces"></span></p>
 
-    <p><strong>Created Faces</strong> - <span id="createdFaces">Loading...</span></p>
+    <p><strong>Xrays</strong> - <span id="xrays"></span></p>
 
-    <p><strong>Test</strong> - <span id="test">Loading...</span></p>
+    <p><strong>Created Faces</strong> - <span id="createdFaces"></span></p>
 
-    <p><strong>Comments</strong> - <span id="comments">Loading...</span></p>
+    <p><strong>Test</strong> - <span id="test"></span></p>
+
+    <p><strong>Comments</strong> - <span id="comments"></span></p>
+
 </div>
 
+<!-- LOGOS -->
+
 <div class="logos">
-    <img src="Iso.jpg" class="logo" alt="ISO Logo">
-    <img src="Iaf.png" class="logo" alt="IAF Logo">
-    <img src="Ias.jpg" class="logo" alt="IAS Logo">
+    <img src="Iso.jpg" class="logo" alt="ISO">
+    <img src="Iaf.png" class="logo" alt="IAF">
+    <img src="Ias.jpg" class="logo" alt="IAS">
 </div>
 
 <script>
 
-/* -----------------------------
+/* =========================================
    GET URL PARAMETERS
------------------------------- */
+========================================= */
 
-function getParam(param) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(param);
+const params = new URLSearchParams(window.location.search);
+
+/* =========================================
+   HELPER FUNCTION
+========================================= */
+
+function getValue(param, fallback = "Not Provided") {
+
+    const value = params.get(param);
+
+    if(value && value.trim() !== ""){
+        return decodeURIComponent(value);
+    }
+
+    return fallback;
 }
 
-/* -----------------------------
-   DYNAMIC MUKHI / FACES
------------------------------- */
+/* =========================================
+   DYNAMIC FACES
+========================================= */
 
-const faces = getParam("faces") || "1";
+const faces = getValue("faces", "1");
 
-/* -----------------------------
-   MAIN FIELDS
------------------------------- */
+/* =========================================
+   SET TEXT VALUES
+========================================= */
+
+document.getElementById("title").textContent =
+    getValue("title", "Validation Result");
+
+document.getElementById("labName").textContent =
+    getValue("lab", "Rudraksh Gems Testing Lab.");
+
+document.getElementById("status").textContent =
+    getValue("status", "Found");
 
 document.getElementById("cert").textContent =
-    getParam("cert") || "Not Provided";
-
-document.getElementById("weight").textContent =
-    getParam("weight") || "Not Provided";
-
-document.getElementById("measurement").textContent =
-    getParam("measurement") || "Not Provided";
-
-/* -----------------------------
-   ITEM NAME AUTO CHANGES
------------------------------- */
+    getValue("cert");
 
 document.getElementById("itemName").textContent =
-    getParam("itemName") || `Natural ${faces} Face Rudraksha`;
+    getValue(
+        "itemName",
+        `Natural ${faces} Face Rudraksha`
+    );
 
-/* -----------------------------
-   NATURAL FACES AUTO CHANGES
------------------------------- */
+document.getElementById("weight").textContent =
+    getValue("weight");
+
+document.getElementById("shape").textContent =
+    getValue("shape", "Round");
+
+document.getElementById("color").textContent =
+    getValue("color", "Brown");
+
+document.getElementById("measurement").textContent =
+    getValue("measurement");
+
+document.getElementById("mount").textContent =
+    getValue("mount", "Mounted");
 
 document.getElementById("faces").textContent =
     faces;
 
-/* -----------------------------
-   SHAPE + COMMENTS
------------------------------- */
-
-document.getElementById("shape").textContent =
-    getParam("shape") || "Half moon shape";
-
-document.getElementById("comments").textContent =
-    getParam("comments") || `${faces} face seen in microscope`;
-
-/* -----------------------------
-   OPTIONAL FIELDS
------------------------------- */
-
-document.getElementById("color").textContent =
-    getParam("color") || "Brown";
-
-document.getElementById("mount").textContent =
-    getParam("mount") || "Mounted";
-
 document.getElementById("xrays").textContent =
-    getParam("xrays") || "Internally same structure";
+    getValue(
+        "xrays",
+        "Internally same structure"
+    );
 
 document.getElementById("createdFaces").textContent =
-    getParam("createdFaces") || "None";
+    getValue("createdFaces", "None");
 
 document.getElementById("test").textContent =
-    getParam("test") || "Microscopic observation";
+    getValue(
+        "test",
+        "Microscopic observation"
+    );
 
-/* -----------------------------
-   DYNAMIC BEAD IMAGE
------------------------------- */
+document.getElementById("comments").textContent =
+    getValue(
+        "comments",
+        `${faces} faces seen in microscope`
+    );
 
-const beadFile = getParam("img");
+/* =========================================
+   DYNAMIC IMAGE
+========================================= */
 
-if (beadFile) {
-    const beadImg = document.getElementById("beadImage");
-    beadImg.src = beadFile;
-    beadImg.alt = `Bead Image - ${beadFile}`;
-} else {
+const beadImage = getValue("img", "");
+
+if(beadImage !== ""){
+
+    const img = document.getElementById("beadImage");
+
+    img.src = beadImage;
+
+}else{
+
     document.getElementById("beadImage").style.display = "none";
+
 }
 
 </script>
