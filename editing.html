@@ -1,213 +1,637 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Bead Background Remover</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rudraksha Photo Editor</title>
 
 <style>
+    * {
+        box-sizing: border-box;
+    }
+
     body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-        background: #eee;
+        margin: 0;
         padding: 20px;
+        font-family: Arial, sans-serif;
+        background: #eeeeee;
+        text-align: center;
+    }
+
+    h2 {
+        margin-bottom: 15px;
+    }
+
+    .controls {
+        background: white;
+        max-width: 600px;
+        margin: auto;
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    input,
+    button {
+        font-size: 16px;
+        padding: 10px 14px;
+        margin: 6px;
+    }
+
+    button {
+        cursor: pointer;
     }
 
     canvas {
-        max-width: 400px;
-        width: 100%;
+        display: block;
+        width: min(90vw, 600px);
+        height: auto;
+        margin: 25px auto;
         background: white;
-        margin-top: 20px;
         border: 1px solid #ccc;
     }
 
-    button, input {
-        margin: 10px;
-        padding: 10px;
+    #status {
+        margin-top: 10px;
+        font-weight: bold;
     }
 </style>
 </head>
 
 <body>
 
-<h2>Rudraksha Background Remover</h2>
+<h2>Rudraksha Photo Editor</h2>
 
-<input type="file" id="upload" accept="image/*">
-<br>
+<div class="controls">
 
-<button onclick="processImage()">Process Image</button>
-<button onclick="downloadImage()">Download</button>
+    <input
+        type="file"
+        id="imageInput"
+        accept="image/*"
+    >
 
-<br>
+    <br>
 
-<canvas id="canvas" width="1000" height="1000"></canvas>
+    <button id="processButton">
+        Process Bead
+    </button>
+
+    <button id="downloadButton">
+        Download
+    </button>
+
+    <p id="status">Choose a photo.</p>
+
+</div>
+
+<canvas
+    id="output"
+    width="1000"
+    height="1000">
+</canvas>
+
 
 <script>
 
-let originalImage = new Image();
-let canvas = document.getElementById("canvas");
-let ctx = canvas.getContext("2d");
+const input = document.getElementById("imageInput");
+const processButton = document.getElementById("processButton");
+const downloadButton = document.getElementById("downloadButton");
+const statusText = document.getElementById("status");
 
-document.getElementById("upload").addEventListener("change", function(e) {
+const output = document.getElementById("output");
+const outCtx = output.getContext("2d");
 
-    let file = e.target.files[0];
+let sourceImage = null;
+
+
+/* --------------------------------------------------
+   LOAD IMAGE
+-------------------------------------------------- */
+
+input.addEventListener("change", function () {
+
+    const file = input.files[0];
 
     if (!file) return;
 
-    let reader = new FileReader();
+    const reader = new FileReader();
 
-    reader.onload = function(event) {
-        originalImage.onload = function() {
-            processImage();
+    reader.onload = function (event) {
+
+        const img = new Image();
+
+        img.onload = function () {
+
+            sourceImage = img;
+
+            statusText.textContent =
+                "Photo loaded. Click Process Bead.";
+
+            // Show original temporarily
+            outCtx.fillStyle = "white";
+            outCtx.fillRect(0, 0, 1000, 1000);
+
+            const scale = Math.min(
+                900 / img.width,
+                900 / img.height
+            );
+
+            const w = img.width * scale;
+            const h = img.height * scale;
+
+            outCtx.drawImage(
+                img,
+                (1000 - w) / 2,
+                (1000 - h) / 2,
+                w,
+                h
+            );
         };
 
-        originalImage.src = event.target.result;
+        img.src = event.target.result;
     };
 
     reader.readAsDataURL(file);
 });
 
 
-function processImage() {
+/* --------------------------------------------------
+   PROCESS
+-------------------------------------------------- */
 
-    if (!originalImage.src) {
-        alert("Choose an image first.");
+processButton.addEventListener("click", function () {
+
+    if (!sourceImage) {
+        alert("Please choose an image first.");
         return;
     }
 
-    // Temporary canvas
-    let temp = document.createElement("canvas");
+    statusText.textContent = "Processing...";
 
-    temp.width = originalImage.width;
-    temp.height = originalImage.height;
+    // Let browser update status before heavy processing
+    setTimeout(processImage, 50);
+});
 
-    let tctx = temp.getContext("2d");
 
-    tctx.drawImage(
-        originalImage,
-        0,
-        0,
-        temp.width,
-        temp.height
-    );
-
-    let imageData = tctx.getImageData(
-        0,
-        0,
-        temp.width,
-        temp.height
-    );
-
-    let pixels = imageData.data;
-
-    let minX = temp.width;
-    let minY = temp.height;
-    let maxX = 0;
-    let maxY = 0;
+function processImage() {
 
     /*
-       Detect pixels that are NOT white.
+       Work on a smaller temporary image.
 
-       Increase this value if the paper/shadow
-       is being detected as part of the bead.
+       This makes processing much faster,
+       especially on phones.
     */
-    let threshold = 220;
 
-    for (let y = 0; y < temp.height; y++) {
+    const MAX_SIZE = 900;
 
-        for (let x = 0; x < temp.width; x++) {
+    let scale = Math.min(
+        1,
+        MAX_SIZE / Math.max(
+            sourceImage.width,
+            sourceImage.height
+        )
+    );
 
-            let i = (y * temp.width + x) * 4;
+    const w = Math.round(sourceImage.width * scale);
+    const h = Math.round(sourceImage.height * scale);
 
-            let r = pixels[i];
-            let g = pixels[i + 1];
-            let b = pixels[i + 2];
+    const temp = document.createElement("canvas");
 
-            // Brightness
-            let brightness = (r + g + b) / 3;
+    temp.width = w;
+    temp.height = h;
 
-            // Darker pixels = likely bead
-            if (brightness < threshold) {
+    const ctx = temp.getContext("2d");
 
-                minX = Math.min(minX, x);
-                minY = Math.min(minY, y);
-                maxX = Math.max(maxX, x);
-                maxY = Math.max(maxY, y);
+    ctx.drawImage(
+        sourceImage,
+        0,
+        0,
+        w,
+        h
+    );
 
+    const imageData = ctx.getImageData(
+        0,
+        0,
+        w,
+        h
+    );
+
+    const pixels = imageData.data;
+
+    /*
+       Create binary mask.
+
+       Dark/colored pixels are treated as
+       possible bead pixels.
+
+       White paper is ignored.
+    */
+
+    const mask = new Uint8Array(w * h);
+
+    for (let y = 0; y < h; y++) {
+
+        for (let x = 0; x < w; x++) {
+
+            const i = (y * w + x) * 4;
+
+            const r = pixels[i];
+            const g = pixels[i + 1];
+            const b = pixels[i + 2];
+
+            const brightness =
+                (r + g + b) / 3;
+
+            const maxRGB =
+                Math.max(r, g, b);
+
+            const minRGB =
+                Math.min(r, g, b);
+
+            const saturation =
+                maxRGB - minRGB;
+
+            /*
+               Conditions:
+
+               1. Dark pixels
+               2. Clearly colored pixels
+
+               This helps detect brown Rudraksha
+               even when it isn't extremely dark.
+            */
+
+            const dark =
+                brightness < 205;
+
+            const colored =
+                saturation > 25 &&
+                brightness < 235;
+
+            if (dark || colored) {
+                mask[y * w + x] = 1;
             }
         }
     }
 
-    // Nothing detected
-    if (maxX === 0 || maxY === 0) {
-        alert("Could not detect the bead.");
+
+    /* --------------------------------------------------
+       MORPHOLOGICAL CLEANUP
+    -------------------------------------------------- */
+
+    // Remove isolated noise
+    for (let pass = 0; pass < 2; pass++) {
+
+        const copy = new Uint8Array(mask);
+
+        for (let y = 1; y < h - 1; y++) {
+
+            for (let x = 1; x < w - 1; x++) {
+
+                const index = y * w + x;
+
+                let neighbours = 0;
+
+                for (let dy = -1; dy <= 1; dy++) {
+
+                    for (let dx = -1; dx <= 1; dx++) {
+
+                        if (dx === 0 && dy === 0)
+                            continue;
+
+                        neighbours +=
+                            copy[
+                                (y + dy) * w +
+                                (x + dx)
+                            ];
+                    }
+                }
+
+                if (copy[index] === 1 &&
+                    neighbours < 2) {
+
+                    mask[index] = 0;
+                }
+            }
+        }
+    }
+
+
+    /* --------------------------------------------------
+       CONNECTED COMPONENTS
+    -------------------------------------------------- */
+
+    const visited = new Uint8Array(w * h);
+
+    let bestComponent = null;
+    let bestArea = 0;
+
+    for (let y = 0; y < h; y++) {
+
+        for (let x = 0; x < w; x++) {
+
+            const start = y * w + x;
+
+            if (
+                mask[start] === 0 ||
+                visited[start]
+            ) {
+                continue;
+            }
+
+            const queue = [start];
+
+            visited[start] = 1;
+
+            let area = 0;
+
+            let minX = x;
+            let maxX = x;
+            let minY = y;
+            let maxY = y;
+
+            let sumX = 0;
+            let sumY = 0;
+
+            while (queue.length) {
+
+                const current = queue.pop();
+
+                const cy =
+                    Math.floor(current / w);
+
+                const cx =
+                    current - cy * w;
+
+                area++;
+
+                sumX += cx;
+                sumY += cy;
+
+                minX = Math.min(minX, cx);
+                maxX = Math.max(maxX, cx);
+
+                minY = Math.min(minY, cy);
+                maxY = Math.max(maxY, cy);
+
+                /*
+                   8-direction connection
+                */
+
+                for (let dy = -1; dy <= 1; dy++) {
+
+                    for (let dx = -1; dx <= 1; dx++) {
+
+                        if (
+                            dx === 0 &&
+                            dy === 0
+                        ) continue;
+
+                        const nx = cx + dx;
+                        const ny = cy + dy;
+
+                        if (
+                            nx < 0 ||
+                            nx >= w ||
+                            ny < 0 ||
+                            ny >= h
+                        ) continue;
+
+                        const ni =
+                            ny * w + nx;
+
+                        if (
+                            mask[ni] &&
+                            !visited[ni]
+                        ) {
+
+                            visited[ni] = 1;
+
+                            queue.push(ni);
+                        }
+                    }
+                }
+            }
+
+            /*
+               Ignore tiny objects/noise.
+            */
+
+            if (area < 100)
+                continue;
+
+            /*
+               Prefer large components that
+               aren't touching the image edge.
+            */
+
+            const touchesEdge =
+                minX <= 2 ||
+                minY <= 2 ||
+                maxX >= w - 3 ||
+                maxY >= h - 3;
+
+            let score = area;
+
+            if (touchesEdge) {
+                score *= 0.25;
+            }
+
+            if (score > bestArea) {
+
+                bestArea = score;
+
+                bestComponent = {
+                    area,
+                    minX,
+                    maxX,
+                    minY,
+                    maxY,
+                    centerX: sumX / area,
+                    centerY: sumY / area
+                };
+            }
+        }
+    }
+
+
+    /* --------------------------------------------------
+       IF NOTHING FOUND
+    -------------------------------------------------- */
+
+    if (!bestComponent) {
+
+        statusText.textContent =
+            "Could not detect the bead.";
+
+        alert(
+            "Bead could not be detected.\n\n" +
+            "Try a photo with a brighter white background " +
+            "and the bead clearly separated from the paper."
+        );
+
         return;
     }
 
-    // Bounding box
-    let width = maxX - minX;
-    let height = maxY - minY;
 
-    // Add padding around bead
-    let padding = Math.max(width, height) * 0.20;
+    /* --------------------------------------------------
+       BOUNDING BOX
+    -------------------------------------------------- */
 
-    let cropX = Math.max(0, minX - padding);
-    let cropY = Math.max(0, minY - padding);
+    let minX = bestComponent.minX;
+    let maxX = bestComponent.maxX;
 
-    let cropW = Math.min(
-        temp.width - cropX,
-        width + padding * 2
+    let minY = bestComponent.minY;
+    let maxY = bestComponent.maxY;
+
+    let objectWidth =
+        maxX - minX;
+
+    let objectHeight =
+        maxY - minY;
+
+    /*
+       Add 20% padding.
+    */
+
+    let padding =
+        Math.max(
+            objectWidth,
+            objectHeight
+        ) * 0.20;
+
+    minX = Math.max(
+        0,
+        minX - padding
     );
 
-    let cropH = Math.min(
-        temp.height - cropY,
-        height + padding * 2
+    minY = Math.max(
+        0,
+        minY - padding
     );
 
-    // Clear final canvas
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, 1000, 1000);
-
-    // Maintain aspect ratio
-    let scale = Math.min(
-        800 / cropW,
-        800 / cropH
+    maxX = Math.min(
+        w,
+        maxX + padding
     );
 
-    let finalW = cropW * scale;
-    let finalH = cropH * scale;
+    maxY = Math.min(
+        h,
+        maxY + padding
+    );
 
-    // Center
-    let finalX = (1000 - finalW) / 2;
-    let finalY = (1000 - finalH) / 2;
+    objectWidth =
+        maxX - minX;
 
-    ctx.drawImage(
+    objectHeight =
+        maxY - minY;
+
+
+    /* --------------------------------------------------
+       CREATE SQUARE OUTPUT
+    -------------------------------------------------- */
+
+    outCtx.clearRect(
+        0,
+        0,
+        1000,
+        1000
+    );
+
+    // Pure white background
+    outCtx.fillStyle = "#FFFFFF";
+
+    outCtx.fillRect(
+        0,
+        0,
+        1000,
+        1000
+    );
+
+
+    /*
+       Make bead occupy approximately
+       75% of the canvas.
+    */
+
+    const targetSize = 750;
+
+    const scaleFactor =
+        targetSize /
+        Math.max(
+            objectWidth,
+            objectHeight
+        );
+
+    const finalWidth =
+        objectWidth * scaleFactor;
+
+    const finalHeight =
+        objectHeight * scaleFactor;
+
+    /*
+       Center exactly.
+    */
+
+    const finalX =
+        (1000 - finalWidth) / 2;
+
+    const finalY =
+        (1000 - finalHeight) / 2;
+
+
+    /*
+       Draw cropped image.
+    */
+
+    outCtx.imageSmoothingEnabled = true;
+
+    outCtx.imageSmoothingQuality = "high";
+
+    outCtx.drawImage(
         temp,
-        cropX,
-        cropY,
-        cropW,
-        cropH,
+
+        minX,
+        minY,
+        objectWidth,
+        objectHeight,
+
         finalX,
         finalY,
-        finalW,
-        finalH
+        finalWidth,
+        finalHeight
     );
+
+
+    statusText.textContent =
+        "Done — 1:1 image created.";
 
 }
 
 
-function downloadImage() {
+/* --------------------------------------------------
+   DOWNLOAD
+-------------------------------------------------- */
 
-    let link = document.createElement("a");
+downloadButton.addEventListener(
+    "click",
+    function () {
 
-    link.download = "rudraksha-processed.jpg";
+        const link =
+            document.createElement("a");
 
-    link.href = canvas.toDataURL(
-        "image/jpeg",
-        0.95
-    );
+        link.download =
+            "rudraksha-1x1.jpg";
 
-    link.click();
-}
+        link.href =
+            output.toDataURL(
+                "image/jpeg",
+                0.95
+            );
+
+        link.click();
+    }
+);
 
 </script>
 
