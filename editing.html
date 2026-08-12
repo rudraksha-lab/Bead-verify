@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Bead Background Remover</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background: #eee;
+        padding: 20px;
+    }
+
+    canvas {
+        max-width: 400px;
+        width: 100%;
+        background: white;
+        margin-top: 20px;
+        border: 1px solid #ccc;
+    }
+
+    button, input {
+        margin: 10px;
+        padding: 10px;
+    }
+</style>
+</head>
+
+<body>
+
+<h2>Rudraksha Background Remover</h2>
+
+<input type="file" id="upload" accept="image/*">
+<br>
+
+<button onclick="processImage()">Process Image</button>
+<button onclick="downloadImage()">Download</button>
+
+<br>
+
+<canvas id="canvas" width="1000" height="1000"></canvas>
+
+<script>
+
+let originalImage = new Image();
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+
+document.getElementById("upload").addEventListener("change", function(e) {
+
+    let file = e.target.files[0];
+
+    if (!file) return;
+
+    let reader = new FileReader();
+
+    reader.onload = function(event) {
+        originalImage.onload = function() {
+            processImage();
+        };
+
+        originalImage.src = event.target.result;
+    };
+
+    reader.readAsDataURL(file);
+});
+
+
+function processImage() {
+
+    if (!originalImage.src) {
+        alert("Choose an image first.");
+        return;
+    }
+
+    // Temporary canvas
+    let temp = document.createElement("canvas");
+
+    temp.width = originalImage.width;
+    temp.height = originalImage.height;
+
+    let tctx = temp.getContext("2d");
+
+    tctx.drawImage(
+        originalImage,
+        0,
+        0,
+        temp.width,
+        temp.height
+    );
+
+    let imageData = tctx.getImageData(
+        0,
+        0,
+        temp.width,
+        temp.height
+    );
+
+    let pixels = imageData.data;
+
+    let minX = temp.width;
+    let minY = temp.height;
+    let maxX = 0;
+    let maxY = 0;
+
+    /*
+       Detect pixels that are NOT white.
+
+       Increase this value if the paper/shadow
+       is being detected as part of the bead.
+    */
+    let threshold = 220;
+
+    for (let y = 0; y < temp.height; y++) {
+
+        for (let x = 0; x < temp.width; x++) {
+
+            let i = (y * temp.width + x) * 4;
+
+            let r = pixels[i];
+            let g = pixels[i + 1];
+            let b = pixels[i + 2];
+
+            // Brightness
+            let brightness = (r + g + b) / 3;
+
+            // Darker pixels = likely bead
+            if (brightness < threshold) {
+
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x);
+                maxY = Math.max(maxY, y);
+
+            }
+        }
+    }
+
+    // Nothing detected
+    if (maxX === 0 || maxY === 0) {
+        alert("Could not detect the bead.");
+        return;
+    }
+
+    // Bounding box
+    let width = maxX - minX;
+    let height = maxY - minY;
+
+    // Add padding around bead
+    let padding = Math.max(width, height) * 0.20;
+
+    let cropX = Math.max(0, minX - padding);
+    let cropY = Math.max(0, minY - padding);
+
+    let cropW = Math.min(
+        temp.width - cropX,
+        width + padding * 2
+    );
+
+    let cropH = Math.min(
+        temp.height - cropY,
+        height + padding * 2
+    );
+
+    // Clear final canvas
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, 1000, 1000);
+
+    // Maintain aspect ratio
+    let scale = Math.min(
+        800 / cropW,
+        800 / cropH
+    );
+
+    let finalW = cropW * scale;
+    let finalH = cropH * scale;
+
+    // Center
+    let finalX = (1000 - finalW) / 2;
+    let finalY = (1000 - finalH) / 2;
+
+    ctx.drawImage(
+        temp,
+        cropX,
+        cropY,
+        cropW,
+        cropH,
+        finalX,
+        finalY,
+        finalW,
+        finalH
+    );
+
+}
+
+
+function downloadImage() {
+
+    let link = document.createElement("a");
+
+    link.download = "rudraksha-processed.jpg";
+
+    link.href = canvas.toDataURL(
+        "image/jpeg",
+        0.95
+    );
+
+    link.click();
+}
+
+</script>
+
+</body>
+</html>
