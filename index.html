@@ -67,6 +67,7 @@
         gap:25px;
         margin:30px 0;
         flex-wrap:wrap;
+        align-items: center;
     }
 
     .logo{
@@ -136,113 +137,141 @@
 </div>
 
 <script>
+(function () {
 
-/* =========================================
-   GET URL PARAMETERS
-========================================= */
+    /* =========================================
+       PATH TO BEADS (relative to this file at repo root)
+    ========================================= */
 
-const params = new URLSearchParams(window.location.search);
+    const BEADS_BASE = './Bead-verify/Beads';
 
-/* =========================================
-   HELPER FUNCTION
-========================================= */
+    const params = new URLSearchParams(window.location.search);
 
-function getValue(param, fallback = "Not Provided") {
+    /* =========================================
+       HELPER
+    ========================================= */
 
-    const value = params.get(param);
-
-    if(value && value.trim() !== ""){
-        return decodeURIComponent(value);
+    function getValue(param, fallback = "Not Provided") {
+        const value = params.get(param);
+        if (value && value.trim() !== "") {
+            return decodeURIComponent(value);
+        }
+        return fallback;
     }
 
-    return fallback;
-}
+    /* =========================================
+       OLD MODE — query-string params
+    ========================================= */
 
-/* =========================================
-   DYNAMIC FACES
-========================================= */
+    function applyQueryParams() {
 
-const faces = getValue("faces", "1");
+        const faces = getValue("faces", "1");
 
-/* =========================================
-   SET TEXT VALUES
-========================================= */
+        document.getElementById("title").textContent =
+            getValue("title", "Validation Result");
 
-document.getElementById("title").textContent =
-    getValue("title", "Validation Result");
+        document.getElementById("labName").textContent =
+            getValue("lab", "Rudraksh Gems Testing Lab.");
 
-document.getElementById("labName").textContent =
-    getValue("lab", "Rudraksh Gems Testing Lab.");
+        document.getElementById("status").textContent =
+            getValue("status", "Found");
 
-document.getElementById("status").textContent =
-    getValue("status", "Found");
+        document.getElementById("cert").textContent =
+            getValue("cert");
 
-document.getElementById("cert").textContent =
-    getValue("cert");
+        document.getElementById("itemName").textContent =
+            getValue("itemName", `Natural ${faces} Face Rudraksha`);
 
-document.getElementById("itemName").textContent =
-    getValue(
-        "itemName",
-        `Natural ${faces} Face Rudraksha`
-    );
+        document.getElementById("weight").textContent =
+            getValue("weight");
 
-document.getElementById("weight").textContent =
-    getValue("weight");
+        document.getElementById("shape").textContent =
+            getValue("shape", "Round");
 
-document.getElementById("shape").textContent =
-    getValue("shape", "Round");
+        document.getElementById("color").textContent =
+            getValue("color", "Brown");
 
-document.getElementById("color").textContent =
-    getValue("color", "Brown");
+        document.getElementById("measurement").textContent =
+            getValue("measurement");
 
-document.getElementById("measurement").textContent =
-    getValue("measurement");
+        document.getElementById("mount").textContent =
+            getValue("mount", "Mounted");
 
-document.getElementById("mount").textContent =
-    getValue("mount", "Mounted");
+        document.getElementById("faces").textContent =
+            faces;
 
-document.getElementById("faces").textContent =
-    faces;
+        document.getElementById("xrays").textContent =
+            getValue("xrays", "Internally same structure");
 
-document.getElementById("xrays").textContent =
-    getValue(
-        "xrays",
-        "Internally same structure"
-    );
+        document.getElementById("createdFaces").textContent =
+            getValue("createdFaces", "None");
 
-document.getElementById("createdFaces").textContent =
-    getValue("createdFaces", "None");
+        document.getElementById("test").textContent =
+            getValue("test", "Microscopic observation");
 
-document.getElementById("test").textContent =
-    getValue(
-        "test",
-        "Microscopic observation"
-    );
+        document.getElementById("comments").textContent =
+            getValue("comments", `${faces} faces seen in microscope`);
 
-document.getElementById("comments").textContent =
-    getValue(
-        "comments",
-        `${faces} faces seen in microscope`
-    );
+        /* image */
+        const beadImage = getValue("img", "");
+        if (beadImage !== "") {
+            document.getElementById("beadImage").src = beadImage;
+        } else {
+            document.getElementById("beadImage").style.display = "none";
+        }
+    }
 
-/* =========================================
-   DYNAMIC IMAGE
-========================================= */
+    /* =========================================
+       NEW MODE — ?cno=XXXX → fetch data.json
+    ========================================= */
 
-const beadImage = getValue("img", "");
+    async function applyCnoMode(cno) {
+        try {
+            const res = await fetch(
+                `${BEADS_BASE}/${encodeURIComponent(cno)}/data.json`,
+                { cache: 'no-store' }
+            );
+            if (!res.ok) throw new Error('data.json ' + res.status);
 
-if(beadImage !== ""){
+            const d = await res.json();
+            const faces = d.faces || "1";
 
-    const img = document.getElementById("beadImage");
+            document.getElementById("cert").textContent          = d.cno || cno;
+            document.getElementById("itemName").textContent      = d.itemName || `Natural ${faces} Face Rudraksha`;
+            document.getElementById("weight").textContent        = d.weight || "Not Provided";
+            document.getElementById("shape").textContent         = d.shape || "Not Provided";
+            document.getElementById("color").textContent         = d.color || "Not Provided";
+            document.getElementById("measurement").textContent   = d.measurement || "Not Provided";
+            document.getElementById("mount").textContent         = d.mount || "Not Provided";
+            document.getElementById("faces").textContent         = faces;
+            document.getElementById("xrays").textContent         = d.xrays || "Not Provided";
+            document.getElementById("createdFaces").textContent  = d.createdFaces || "Not Provided";
+            document.getElementById("test").textContent          = d.test || "Not Provided";
+            document.getElementById("comments").textContent      = d.comments || "Not Provided";
 
-    img.src = beadImage;
+            const imgName = d.image || "image.jpg";
+            document.getElementById("beadImage").src =
+                `${BEADS_BASE}/${encodeURIComponent(cno)}/${imgName}`;
 
-}else{
+        } catch (err) {
+            console.warn('CNO lookup failed, using query-string fallback:', err);
+            applyQueryParams();
+        }
+    }
 
-    document.getElementById("beadImage").style.display = "none";
+    /* =========================================
+       BOOT
+    ========================================= */
 
-}
+    const cno = (params.get('cno') || '').trim();
 
+    if (cno !== '') {
+        applyCnoMode(cno);
+    } else {
+        applyQueryParams();
+    }
+
+})();
 </script>
 
 </body>
