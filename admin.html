@@ -80,7 +80,7 @@
   }
 
   /* =========================================
-     CERTIFICATE (scoped under .certificate)
+     CERTIFICATE
   ========================================= */
   .certificate{
     position: relative;
@@ -98,7 +98,6 @@
   }
   .certificate *{ margin:0; padding:0; box-sizing:border-box; }
 
-  /* LOGO — no border */
   .certificate .logo-placeholder{
     position:absolute; top:12px; left:12px;
     width:170px; height:170px;
@@ -124,7 +123,6 @@
     color:#d4202f; margin-top:10px; text-align:center; white-space:nowrap;
   }
 
-  /* QR — clean, no border */
   .certificate .qr-placeholder{
     position:absolute; top:14px; right:16px;
     width:205px; height:205px;
@@ -132,22 +130,30 @@
     background:#fff;
   }
   .certificate .qr-placeholder img{
-    width:185px;
-    height:185px;
-    display:block;
-    object-fit:contain;
+    width:185px; height:185px;
+    display:block; object-fit:contain;
   }
 
-  /* LAB TESTED — reads top-to-bottom, no rotate */
+  /* LAB TESTED — 90° ANTICLOCKWISE rotation.
+     The text is horizontal by default. We anchor it at the BOTTOM-LEFT
+     of the desired vertical strip, then rotate -90° around that anchor.
+     Result: text grows upward, L at bottom, D at top, letters rotated
+     so they read normally when the paper is rotated 90° clockwise. */
   .certificate .lab-tested{
-    position:absolute; top:276px; left:18px;
-    writing-mode: vertical-rl;
-    font-family:"Arial Black","Arial Bold",Arial,Helvetica,sans-serif;
-    font-size:38px; font-weight:900; letter-spacing:2px; line-height:1;
-    color:#d4202f; white-space:nowrap;
+    position: absolute;
+    left: 18px;
+    top: 556px;
+    transform-origin: 0 0;
+    transform: rotate(-90deg);
+    font-family: "Arial Black", "Arial Bold", Arial, Helvetica, sans-serif;
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: #d4202f;
+    white-space: nowrap;
   }
 
-  /* PRODUCT IMAGE — 270 × 270, aligned left with CNO */
   .certificate .product-image-placeholder{
     position:absolute; top:208px; left:148px;
     width:270px; height:270px;
@@ -336,7 +342,6 @@
   </section>
 </main>
 
-<!-- QR (qrcode-generator — classic, synchronous) + html2canvas -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
@@ -347,12 +352,10 @@ ort.env.wasm.numThreads = 1;
 ort.env.wasm.simd = true;
 ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/';
 
-/* ---------------- HARDCODED CONFIG ---------------- */
 const REPO_FULL  = 'rudraksha-lab/Bead-verify';
 const PAGES_BASE = 'https://rudraksha-lab.github.io/Bead-verify';
 const BEADS_BASE = 'Bead-verify/Beads';
 
-/* ---------------- MODEL / PIPELINE ---------------- */
 const MODEL_URL    = 'https://huggingface.co/tomjackson2023/rembg/resolve/main/u2netp.onnx';
 const CACHE_KEY    = 'bg-remover-u2netp-v1';
 const INPUT        = 320;
@@ -362,7 +365,6 @@ const ALPHA_MIN    = 12;
 const SCAN_MAX     = 900;
 const TARGET_BYTES = 90 * 1024;
 
-/* ---------------- DOM ---------------- */
 const $ = s => document.querySelector(s);
 const patEl = $('#pat');
 const testConnBtn = $('#testConn'), connStatus = $('#connStatus');
@@ -383,14 +385,12 @@ const dlQRBtn = $('#dlQR'), openValBtn = $('#openVal');
 const dlPngBtn = $('#dlPng'), pngStatus = $('#pngStatus');
 const certificateEl = $('#certificate'), certWrap = $('#certWrap');
 
-/* ---------------- STATE ---------------- */
 let session = null;
 let originalFile = null;
 let processedBlob = null;
 let processedURL = null;
 let lastQRUrl = '';
 
-/* ---------------- HELPERS ---------------- */
 const setProc = (t, cls = '') => { procStatus.textContent = t; procStatus.className = 'status ' + cls; };
 const setPub  = (t, cls = '') => { pubStatus.textContent = t;  pubStatus.className  = 'status ' + cls; };
 const setPng  = (t, cls = '') => { pngStatus.textContent = t;  pngStatus.className  = 'status no-print ' + cls; };
@@ -405,9 +405,7 @@ function formatFaces(n) {
   return `${FACE_WORDS[num] || num} (${num})`;
 }
 
-/* ---------------- QR VIA qrcode-generator (synchronous, real PNG) ---------------- */
 function generateQRDataURL(text, targetSize = 740) {
-  // type 0 = auto, 'M' = medium error correction
   const qr = qrcode(0, 'M');
   qr.addData(text);
   qr.make();
@@ -432,7 +430,6 @@ function generateQRDataURL(text, targetSize = 740) {
   return canvas.toDataURL('image/png');
 }
 
-/* ---------------- ITEM NAME AUTO ---------------- */
 function syncItemName(force = false) {
   const auto = `Natural ${facesEl.value || 1} Face Rudraksha`;
   if (force || itemNameEl.value === '' || itemNameEl.dataset.auto === 'true') {
@@ -446,7 +443,6 @@ itemNameEl.addEventListener('input', () => {
 });
 syncItemName(true);
 
-/* ---------------- FILL CERTIFICATE ---------------- */
 function fillCertificate() {
   const cno = cnoEl.value.trim();
   const faces = facesEl.value || '1';
@@ -476,7 +472,6 @@ function fillCertificate() {
     certImgPh.style.background = '#eef0f2';
   }
 
-  /* QR — synchronous, right next to title */
   const qrImg = document.getElementById('certQR');
   if (cno && typeof qrcode !== 'undefined') {
     const url = `${PAGES_BASE}/index.html?cno=${encodeURIComponent(cno)}`;
@@ -506,7 +501,6 @@ function fillCertificate() {
   el.addEventListener('change', fillCertificate);
 });
 
-/* ---------------- FILE PICK ---------------- */
 fileEl.addEventListener('change', e => {
   const f = e.target.files?.[0];
   if (!f) return;
@@ -525,7 +519,6 @@ fileEl.addEventListener('change', e => {
   fillCertificate();
 });
 
-/* ---------------- COMPRESSION ---------------- */
 async function compressToTarget(blob, targetBytes, maxSide = 1200) {
   if (blob.type.includes('jpeg') && blob.size <= targetBytes) {
     const bm = await createImageBitmap(blob);
@@ -564,7 +557,6 @@ async function compressToTarget(blob, targetBytes, maxSide = 1200) {
   return { blob: b, width: canvas.width, height: canvas.height, quality: 0.3, size: b.size };
 }
 
-/* ---------------- BG REMOVAL ---------------- */
 async function loadSession() {
   if (session) return session;
   const cache = await caches.open(CACHE_KEY);
@@ -643,7 +635,6 @@ async function removeBg(bitmap) {
   return outC;
 }
 
-/* ---------------- WHITE 1:1 ---------------- */
 function whiteSquare(src) {
   const W = src.width, H = src.height;
   const sc = Math.min(1, SCAN_MAX / Math.max(W, H));
@@ -691,7 +682,6 @@ function whiteSquare(src) {
   return out;
 }
 
-/* ---------------- PROCESS ---------------- */
 processBtn.addEventListener('click', async () => {
   if (!originalFile) return;
   processBtn.disabled = true;
@@ -746,7 +736,6 @@ processBtn.addEventListener('click', async () => {
   }
 });
 
-/* ---------------- GITHUB ---------------- */
 async function ghGetRepo(pat) {
   const r = await fetch(`https://api.github.com/repos/${REPO_FULL}`, {
     headers: { 'Authorization': `Bearer ${pat}`, 'Accept': 'application/vnd.github+json' }
@@ -793,7 +782,6 @@ async function blobToBase64(blob) {
   });
 }
 
-/* ---------------- TEST CONNECTION ---------------- */
 testConnBtn.addEventListener('click', async () => {
   const pat = patEl.value.trim();
   connStatus.textContent = 'Testing…'; connStatus.className = 'status';
@@ -808,7 +796,6 @@ testConnBtn.addEventListener('click', async () => {
   }
 });
 
-/* ---------------- PUBLISH ---------------- */
 publishBtn.addEventListener('click', async () => {
   const pat = patEl.value.trim();
   const cno = cnoEl.value.trim();
@@ -862,7 +849,6 @@ publishBtn.addEventListener('click', async () => {
   }
 });
 
-/* ---------------- QR DOWNLOAD / OPEN ---------------- */
 dlQRBtn.addEventListener('click', () => {
   const cno = cnoEl.value.trim();
   if (!cno) return;
@@ -878,7 +864,6 @@ openValBtn.addEventListener('click', () => {
   if (url) window.open(url, '_blank', 'noopener');
 });
 
-/* ---------------- DOWNLOAD CERTIFICATE AS PNG ---------------- */
 dlPngBtn.addEventListener('click', async () => {
   if (typeof html2canvas === 'undefined') {
     setPng('❌ html2canvas not loaded', 'err');
@@ -890,13 +875,11 @@ dlPngBtn.addEventListener('click', async () => {
 
   const cno = cnoEl.value.trim();
 
-  /* Ensure QR is up to date */
   if (cno) {
     const expectedUrl = `${PAGES_BASE}/index.html?cno=${encodeURIComponent(cno)}`;
     if (expectedUrl !== lastQRUrl) fillCertificate();
   }
 
-  /* Temporarily expand for full-res capture */
   const prevTransform = certificateEl.style.transform;
   const prevWrapW = certWrap.style.width;
   const prevWrapH = certWrap.style.height;
@@ -909,7 +892,6 @@ dlPngBtn.addEventListener('click', async () => {
   certWrap.style.overflow = 'visible';
   certWrap.style.boxShadow = 'none';
 
-  /* Wait for layout + images to fully decode */
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
   const imgs = Array.from(certificateEl.querySelectorAll('img'));
@@ -962,7 +944,6 @@ dlPngBtn.addEventListener('click', async () => {
   }
 });
 
-/* ---------------- BOOT ---------------- */
 fillCertificate();
 loadSession()
   .then(() => setProc('Model ready — pick an image.'))
