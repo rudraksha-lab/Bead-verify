@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rudraksha Bead Uploader</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#181b22; --card2:#12151c; --fg:#e9edf3; --mut:#8b93a3;
+    --acc:#4f8cff; --ok:#22c55e; --err:#ef4444; --br:#232733;
+    --cert-scale: 0.82;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;background:var(--bg);color:var(--fg);
+    font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    padding:24px;
+  }
+  main{max-width:920px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 16px;letter-spacing:-.3px}
+  h2{font-size:14px;margin:0 0 12px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em}
+  .card{
+    background:var(--card);border:1px solid var(--br);border-radius:14px;
+    padding:18px;margin-bottom:16px;
+  }
+  label{display:block;font-size:12px;color:var(--mut);margin-bottom:10px}
+  label > input{
+    display:block;width:100%;margin-top:4px;
+    background:var(--card2);border:1px solid var(--br);border-radius:8px;
+    padding:9px 11px;color:var(--fg);font-size:13px;font-family:inherit;
+  }
+  label > input:focus{outline:1px solid var(--acc);border-color:var(--acc)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+  .grid .wide{grid-column:1 / -1}
+  @media(max-width:560px){.grid{grid-template-columns:1fr}}
+  button{
+    border:0;border-radius:9px;padding:10px 16px;font-weight:600;font-size:13px;
+    cursor:pointer;background:var(--acc);color:#fff;transition:.15s;
+    font-family:inherit;
+  }
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{background:#232a38;color:var(--fg)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .status{font-size:13px;color:var(--mut);min-height:18px;margin-top:10px;white-space:pre-line}
+  .status.ok{color:var(--ok)}
+  .status.err{color:var(--err)}
+  .bar{height:6px;border-radius:99px;background:#232a38;overflow:hidden;margin-top:10px;display:none}
+  .bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+  .previews{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  .previews > div{background:#0b0d12;border-radius:10px;padding:10px;text-align:center;min-height:180px}
+  .previews img{max-width:100%;max-height:200px;border-radius:6px;display:block;margin:0 auto}
+  .cap{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+  #file{
+    display:block;padding:10px;border:2px dashed #2c3242;border-radius:10px;
+    width:100%;background:var(--card2);color:var(--fg);font-size:13px;
+    cursor:pointer;transition:.15s;
+  }
+  #file:hover{border-color:var(--acc)}
+  .result{display:flex;gap:20px;align-items:flex-start;margin-top:16px;flex-wrap:wrap}
+  .linkWrap{flex:1;min-width:260px}
+  .linkWrap a{color:var(--acc);word-break:break-all;font-size:12px;display:block;margin:4px 0 12px}
+  .hint{font-size:11px;color:var(--mut);margin-top:6px}
+  .banner-info{
+    background:#12151c;border:1px solid var(--br);border-radius:10px;
+    padding:10px 14px;font-size:12px;color:var(--mut);margin-bottom:16px;
+    line-height:1.7;
+  }
+  .banner-info b{color:var(--fg);font-weight:600}
+  .banner-info code{color:var(--acc);font-size:12px}
+  .certScroll{overflow-x:auto;padding: 4px 0 8px}
+  .certWrap{
+    width: calc(1009px * var(--cert-scale));
+    height: calc(639px * var(--cert-scale));
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid #2c3242;
+    background: #ffffff;
+    box-shadow: 0 6px 24px rgba(0,0,0,.35);
+  }
+
+  /* =========================================
+     CERTIFICATE (scoped under .certificate)
+  ========================================= */
+  .certificate{
+    position: relative;
+    width: 1009px;
+    height: 639px;
+    background: #ffffff;
+    overflow: hidden;
+    transform: scale(var(--cert-scale));
+    transform-origin: top left;
+    font-family: Arial, Helvetica, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-align: initial;
+    color: #000;
+    line-height: 1.25;
+  }
+  .certificate *{ margin:0; padding:0; box-sizing:border-box; }
+
+  .certificate .logo-placeholder{
+    position:absolute; top:12px; left:12px;
+    width:170px; height:170px;
+    border:2px dashed #c9a24a;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center; color:#c9a24a; font-size:13px; font-weight:bold; line-height:1.25;
+    overflow:hidden;
+  }
+  .certificate .logo-placeholder img{
+    width:100%; height:100%; object-fit:contain; display:block;
+  }
+
+  .certificate .title-block{
+    position:absolute; top:46px; left:198px; width:575px;
+  }
+  .certificate .lab-name{
+    font-family:"Arial Black","Arial Bold",Arial,Helvetica,sans-serif;
+    font-size:33px; font-weight:900; line-height:1;
+    letter-spacing:-1.2px; color:#d4202f; white-space:nowrap;
+  }
+  .certificate .iso-line{
+    font-family:Arial,Helvetica,sans-serif;
+    font-size:23px; font-weight:400; letter-spacing:-0.4px;
+    color:#d4202f; margin-top:10px; text-align:center; white-space:nowrap;
+  }
+
+  .certificate .qr-placeholder{
+    position:absolute; top:14px; right:16px;
+    width:205px; height:205px;
+    border:1px solid #eee;
+    display:flex; align-items:center; justify-content:center;
+    background:#fff;
+  }
+  .certificate .qr-placeholder canvas{
+    width:185px; height:185px; display:block;
+  }
+
+  .certificate .lab-tested{
+    position:absolute; top:276px; left:18px;
+    writing-mode:vertical-rl; transform:rotate(180deg);
+    font-family:"Arial Black","Arial Bold",Arial,Helvetica,sans-serif;
+    font-size:38px; font-weight:900; letter-spacing:2px; line-height:1;
+    color:#d4202f; white-space:nowrap;
+  }
+
+  .certificate .product-image-placeholder{
+    position:absolute; top:226px; left:148px;
+    width:362px; height:252px;
+    background:#eef0f2; border:1px solid #dddddd;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center; color:#999999; font-size:13px; font-weight:bold; line-height:1.25;
+    overflow:hidden;
+  }
+  .certificate .product-image-placeholder img{
+    width:100%; height:100%; object-fit:contain; display:block;
+  }
+
+  .certificate .cno-block{
+    position:absolute; top:492px; left:148px; width:362px; text-align:left;
+  }
+  .certificate .cno-label{
+    color:#000000; font-size:25px; font-weight:900; letter-spacing:-0.5px; line-height:1;
+  }
+  .certificate .cno-number{
+    color:#1e5aa8; font-size:24px; font-weight:800; letter-spacing:-0.3px;
+    line-height:1; margin-top:8px; word-break:break-all;
+  }
+
+  .certificate .spec-block{
+    position:absolute; top:240px; right:16px; width:400px;
+    text-align:right; font-size:20px; line-height:30px;
+  }
+  .certificate .spec-block .row{
+    line-height:30px; margin:0; padding:0; white-space:nowrap;
+  }
+  .certificate .spec-block .label{ font-weight:800; color:#111111; }
+  .certificate .spec-block .value{ font-weight:400; color:#111111; }
+
+  .certificate .banner{
+    position:absolute; bottom:0; left:0;
+    width:1009px; height:56px;
+    background:#9e1218;
+    display:flex; align-items:center; padding-left:32px;
+  }
+  .certificate .banner span{
+    color:#ffffff; font-size:31px; font-weight:800; letter-spacing:-0.5px; white-space:nowrap;
+  }
+
+  /* ========== PRINT ========== */
+  @media print {
+    body { background:#fff !important; padding:0 !important; }
+    .no-print { display:none !important; }
+    main { max-width:none !important; margin:0 !important; }
+    .card { background:transparent !important; border:0 !important; padding:0 !important; margin:0 !important; }
+    .certScroll { overflow:visible !important; padding:0 !important; }
+    .certWrap {
+      width:1009px !important; height:639px !important;
+      border:0 !important; box-shadow:none !important; border-radius:0 !important;
+      margin:0 !important;
+    }
+    .certificate { transform:none !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1 class="no-print">Rudraksha Bead Uploader</h1>
+
+  <div class="banner-info no-print">
+    <b>Repo:</b> <code>rudraksha-lab/Bead-verify</code> ·
+    <b>Pages:</b> <code>https://rudraksha-lab.github.io/Bead-verify</code><br>
+    <b>Beads path:</b> <code>Bead-verify/Beads/{CNO}/</code>
+  </div>
+
+  <!-- ===== 1. GitHub Access ===== -->
+  <section class="card no-print">
+    <h2>1 · GitHub Access</h2>
+    <label>Fine-grained PAT
+      <input type="password" id="pat" placeholder="github_pat_..." autocomplete="off" spellcheck="false">
+    </label>
+    <div class="row">
+      <button id="testConn" class="ghost" type="button">Test Connection</button>
+      <span id="connStatus" class="status" style="margin:0"></span>
+    </div>
+    <div class="hint">PAT needs <b>Contents: Read &amp; Write</b> on <code>rudraksha-lab/Bead-verify</code>. Stored only in this tab's memory.</div>
+  </section>
+
+  <!-- ===== 2. Bead data ===== -->
+  <section class="card no-print">
+    <h2>2 · Bead Data</h2>
+    <div class="grid">
+      <label>CNO <input id="cno" placeholder="C3200411R268328" spellcheck="false"></label>
+      <label>Faces <input id="faces" type="number" min="1" value="1"></label>
+      <label class="wide">Item Name <input id="itemName" placeholder="Natural 1 Face Rudraksha"></label>
+      <label>Weight (g) <input id="weight" placeholder="4.21"></label>
+      <label>Shape <input id="shape" placeholder="Half moon shape"></label>
+      <label>Color <input id="color" placeholder="Light brown"></label>
+      <label>Measurement <input id="measurement" placeholder="32.2 x 17.8 x 18.0"></label>
+      <label>Mount <input id="mount" placeholder="Mounted"></label>
+      <label>X-Rays <input id="xrays" placeholder="Internally same structure"></label>
+      <label>Created Faces <input id="createdFaces" placeholder="None"></label>
+      <label>Test <input id="test" placeholder="Microscopic observation"></label>
+      <label class="wide">Comments <input id="comments" placeholder="One face seen in microscope"></label>
+    </div>
+  </section>
+
+  <!-- ===== 3. Image ===== -->
+  <section class="card no-print">
+    <h2>3 · Image</h2>
+    <input type="file" id="file" accept="image/*">
+    <div class="previews">
+      <div><div class="cap">Original</div><img id="origPreview" alt=""></div>
+      <div><div class="cap">Final · 1:1 White</div><img id="finalPreview" alt=""></div>
+    </div>
+    <div class="row">
+      <button id="process" disabled type="button">Compress → Remove BG → 1:1 White</button>
+      <span class="hint" style="margin:0">Both input &amp; output compressed to ≤ 90 KB</span>
+    </div>
+    <div class="bar" id="procBar"><i id="procFill"></i></div>
+    <div class="status" id="procStatus"></div>
+  </section>
+
+  <!-- ===== 4. Publish ===== -->
+  <section class="card no-print">
+    <h2>4 · Publish</h2>
+    <div class="row">
+      <button id="publish" disabled type="button">Upload to GitHub</button>
+      <button id="dlQR" class="ghost" type="button" disabled>Download QR PNG</button>
+      <button id="openVal" class="ghost" type="button" disabled>Open Page</button>
+    </div>
+    <div class="status" id="pubStatus"></div>
+    <div class="result" id="result" style="display:none">
+      <div class="linkWrap">
+        <div class="cap">Validation URL</div>
+        <a id="valUrl" href="#" target="_blank" rel="noopener"></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5. Certificate ===== -->
+  <section class="card certSection">
+    <h2 class="no-print">5 · Certificate (live preview)</h2>
+    <div class="certScroll">
+      <div class="certWrap" id="certWrap">
+        <div class="certificate" id="certificate">
+
+          <!-- LOGO -->
+          <div class="logo-placeholder">
+            <img src="./Logo.png" alt="Logo"
+                 onerror="this.style.display='none';this.parentElement.textContent='LOGO';">
+          </div>
+
+          <!-- QR -->
+          <div class="qr-placeholder">
+            <canvas id="certQR" width="185" height="185"></canvas>
+          </div>
+
+          <!-- TITLE -->
+          <div class="title-block">
+            <div class="lab-name">Rudraksha &amp; Gems Testing Lab.</div>
+            <div class="iso-line">ISO 9001:2015 Certified Lab</div>
+          </div>
+
+          <!-- VERTICAL LABEL -->
+          <div class="lab-tested">LAB TESTED</div>
+
+          <!-- PRODUCT IMAGE -->
+          <div class="product-image-placeholder" id="certImgPh">
+            <img id="certImg" alt="" style="display:none;">
+          </div>
+
+          <!-- CNO -->
+          <div class="cno-block">
+            <div class="cno-label">CNO:</div>
+            <div class="cno-number" id="certCno">—</div>
+          </div>
+
+          <!-- SPECS -->
+          <div class="spec-block">
+            <div class="row"><span class="label">Weight (Grams):</span> <span class="value" id="certWeight">—</span></div>
+            <div class="row"><span class="label">Shape:</span> <span class="value" id="certShape">—</span></div>
+            <div class="row"><span class="label">Color:</span> <span class="value" id="certColor">—</span></div>
+            <div class="row"><span class="label">Measurement:</span> <span class="value" id="certMeasurement">—</span></div>
+            <div class="row"><span class="label">Mounted:</span> <span class="value" id="certMount">—</span></div>
+            <div class="row"><span class="label">Faces:</span> <span class="value" id="certFaces">—</span></div>
+            <div class="row"><span class="label">X Rays:</span> <span class="value" id="certXrays">—</span></div>
+            <div class="row"><span class="label">Created Faces:</span> <span class="value" id="certCreatedFaces">—</span></div>
+            <div class="row"><span class="label">Test:</span> <span class="value" id="certTest">—</span></div>
+            <div class="row"><span class="label">Comments:</span> <span class="value" id="certComments">—</span></div>
+          </div>
+
+          <!-- BANNER -->
+          <div class="banner">
+            <span id="certBanner">Identified As : —</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <div class="no-print" style="text-align:center;margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button id="dlPng" class="ghost" type="button">Download Certificate as PNG</button>
+      <button class="ghost" type="button" onclick="window.print()">Print Certificate</button>
+    </div>
+    <div class="status no-print" id="pngStatus" style="text-align:center"></div>
+  </section>
+</main>
+
+<!-- QR + html2canvas libraries -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<script type="module">
+import * as ort from 'https://esm.sh/onnxruntime-web@1.18.0';
+
+ort.env.wasm.numThreads = 1;
+ort.env.wasm.simd = true;
+ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/';
+
+/* ---------------- HARDCODED CONFIG ---------------- */
+const REPO_FULL  = 'rudraksha-lab/Bead-verify';
+const PAGES_BASE = 'https://rudraksha-lab.github.io/Bead-verify';
+const BEADS_BASE = 'Bead-verify/Beads';
+
+/* ---------------- MODEL / PIPELINE ---------------- */
+const MODEL_URL    = 'https://huggingface.co/tomjackson2023/rembg/resolve/main/u2netp.onnx';
+const CACHE_KEY    = 'bg-remover-u2netp-v1';
+const INPUT        = 320;
+const PAD          = 0.08;
+const MAX_SIDE     = 900;
+const ALPHA_MIN    = 12;
+const SCAN_MAX     = 900;
+const TARGET_BYTES = 90 * 1024;
+
+/* ---------------- DOM ---------------- */
+const $ = s => document.querySelector(s);
+const patEl = $('#pat');
+const testConnBtn = $('#testConn'), connStatus = $('#connStatus');
+
+const cnoEl = $('#cno'), facesEl = $('#faces'), itemNameEl = $('#itemName');
+const weightEl = $('#weight'), shapeEl = $('#shape'), colorEl = $('#color');
+const measurementEl = $('#measurement'), mountEl = $('#mount');
+const xraysEl = $('#xrays'), createdFacesEl = $('#createdFaces');
+const testEl = $('#test'), commentsEl = $('#comments');
+
+const fileEl = $('#file'), origPreview = $('#origPreview'), finalPreview = $('#finalPreview');
+const processBtn = $('#process'), procBar = $('#procBar'), procFill = $('#procFill'), procStatus = $('#procStatus');
+
+const publishBtn = $('#publish'), pubStatus = $('#pubStatus');
+const resultDiv = $('#result'), valUrlEl = $('#valUrl');
+const dlQRBtn = $('#dlQR'), openValBtn = $('#openVal');
+
+const dlPngBtn = $('#dlPng'), pngStatus = $('#pngStatus');
+const certificateEl = $('#certificate'), certWrap = $('#certWrap');
+
+/* ---------------- STATE ---------------- */
+let session = null;
+let originalFile = null;
+let processedBlob = null;
+let processedURL = null;
+
+/* ---------------- HELPERS ---------------- */
+const setProc = (t, cls = '') => { procStatus.textContent = t; procStatus.className = 'status ' + cls; };
+const setPub  = (t, cls = '') => { pubStatus.textContent = t;  pubStatus.className  = 'status ' + cls; };
+const setPng  = (t, cls = '') => { pngStatus.textContent = t;  pngStatus.className  = 'status no-print ' + cls; };
+const setBar  = p => { procBar.style.display = 'block'; procFill.style.width = (p * 100).toFixed(1) + '%'; };
+
+const FACE_WORDS = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
+  'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen',
+  'Nineteen','Twenty','Twenty-One','Twenty-Two','Twenty-Three','Twenty-Four','Twenty-Five',
+  'Twenty-Six','Twenty-Seven'];
+function formatFaces(n) {
+  const num = parseInt(n, 10) || 1;
+  return `${FACE_WORDS[num] || num} (${num})`;
+}
+
+/* ---------------- ITEM NAME AUTO ---------------- */
+function syncItemName(force = false) {
+  const auto = `Natural ${facesEl.value || 1} Face Rudraksha`;
+  if (force || itemNameEl.value === '' || itemNameEl.dataset.auto === 'true') {
+    itemNameEl.value = auto;
+    itemNameEl.dataset.auto = 'true';
+  }
+}
+facesEl.addEventListener('input', () => syncItemName());
+itemNameEl.addEventListener('input', () => {
+  itemNameEl.dataset.auto = (itemNameEl.value === `Natural ${facesEl.value || 1} Face Rudraksha`) ? 'true' : 'false';
+});
+syncItemName(true);
+
+/* ---------------- FILL CERTIFICATE ---------------- */
+async function fillCertificate() {
+  const cno = cnoEl.value.trim();
+  const faces = facesEl.value || '1';
+  const itemName = itemNameEl.value.trim() || `Natural ${faces} Face Rudraksha`;
+
+  document.getElementById('certCno').textContent            = cno || '—';
+  document.getElementById('certWeight').textContent         = weightEl.value.trim() || '—';
+  document.getElementById('certShape').textContent          = shapeEl.value.trim() || '—';
+  document.getElementById('certColor').textContent          = colorEl.value.trim() || '—';
+  document.getElementById('certMeasurement').textContent    = measurementEl.value.trim() || '—';
+  document.getElementById('certMount').textContent          = mountEl.value.trim() || '—';
+  document.getElementById('certFaces').textContent          = formatFaces(faces);
+  document.getElementById('certXrays').textContent          = xraysEl.value.trim() || '—';
+  document.getElementById('certCreatedFaces').textContent   = createdFacesEl.value.trim() || '—';
+  document.getElementById('certTest').textContent           = testEl.value.trim() || '—';
+  document.getElementById('certComments').textContent       = commentsEl.value.trim() || '—';
+  document.getElementById('certBanner').textContent         = `Identified As : ${itemName}`;
+
+  const certImg = document.getElementById('certImg');
+  const certImgPh = document.getElementById('certImgPh');
+  if (processedURL) {
+    certImg.src = processedURL;
+    certImg.style.display = 'block';
+    certImgPh.style.background = '#fff';
+  } else {
+    certImg.style.display = 'none';
+    certImgPh.style.background = '#eef0f2';
+  }
+
+  if (cno && typeof QRCode !== 'undefined') {
+    const url = `${PAGES_BASE}/index.html?cno=${encodeURIComponent(cno)}`;
+    try {
+      await QRCode.toCanvas(document.getElementById('certQR'), url, { width: 185, margin: 1 });
+    } catch (e) { console.warn('QR:', e); }
+  }
+}
+
+[
+  cnoEl, facesEl, itemNameEl, weightEl, shapeEl, colorEl,
+  measurementEl, mountEl, xraysEl, createdFacesEl, testEl, commentsEl
+].forEach(el => {
+  el.addEventListener('input',  fillCertificate);
+  el.addEventListener('change', fillCertificate);
+});
+
+/* ---------------- FILE PICK ---------------- */
+fileEl.addEventListener('change', e => {
+  const f = e.target.files?.[0];
+  if (!f) return;
+  originalFile = f;
+  origPreview.src = URL.createObjectURL(f);
+  finalPreview.removeAttribute('src');
+  processedBlob = null;
+  if (processedURL) { URL.revokeObjectURL(processedURL); processedURL = null; }
+  processBtn.disabled = false;
+  publishBtn.disabled = true;
+  resultDiv.style.display = 'none';
+  dlQRBtn.disabled = true;
+  openValBtn.disabled = true;
+  setProc('');
+  procBar.style.display = 'none';
+  fillCertificate();
+});
+
+/* ---------------- COMPRESSION ---------------- */
+async function compressToTarget(blob, targetBytes, maxSide = 1200) {
+  if (blob.type.includes('jpeg') && blob.size <= targetBytes) {
+    const bm = await createImageBitmap(blob);
+    const r = { blob, width: bm.width, height: bm.height, quality: 1, size: blob.size };
+    bm.close?.();
+    return r;
+  }
+  const bm = await createImageBitmap(blob);
+  let w = bm.width, h = bm.height;
+  const md = Math.max(w, h);
+  if (md > maxSide) { const s = maxSide / md; w = Math.round(w * s); h = Math.round(h * s); }
+
+  let canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  canvas.getContext('2d').drawImage(bm, 0, 0, w, h);
+  bm.close?.();
+
+  for (let q = 0.9; q >= 0.4; q -= 0.08) {
+    const b = await new Promise(r => canvas.toBlob(r, 'image/jpeg', q));
+    if (b && b.size <= targetBytes) return { blob: b, width: w, height: h, quality: +q.toFixed(2), size: b.size };
+  }
+  for (const scale of [0.75, 0.55, 0.4]) {
+    const w2 = Math.round(w * scale), h2 = Math.round(h * scale);
+    const c2 = document.createElement('canvas');
+    c2.width = w2; c2.height = h2;
+    const ctx = c2.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(canvas, 0, 0, w2, h2);
+    for (let q = 0.8; q >= 0.35; q -= 0.08) {
+      const b = await new Promise(r => c2.toBlob(r, 'image/jpeg', q));
+      if (b && b.size <= targetBytes) return { blob: b, width: w2, height: h2, quality: +q.toFixed(2), size: b.size };
+    }
+    canvas = c2;
+  }
+  const b = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.3));
+  return { blob: b, width: canvas.width, height: canvas.height, quality: 0.3, size: b.size };
+}
+
+/* ---------------- BG REMOVAL ---------------- */
+async function loadSession() {
+  if (session) return session;
+  const cache = await caches.open(CACHE_KEY);
+  let cached = await cache.match(MODEL_URL);
+  if (!cached) {
+    setProc('Downloading model (4.7 MB, one time)…');
+    const res = await fetch(MODEL_URL);
+    if (!res.ok) throw new Error('Model download failed');
+    const total = +res.headers.get('content-length') || 0;
+    const reader = res.body.getReader();
+    const chunks = []; let got = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value); got += value.length;
+      if (total) setBar(0.05 + (got / total) * 0.15);
+    }
+    const blob = new Blob(chunks);
+    await cache.put(MODEL_URL, new Response(blob, {
+      headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': blob.size }
+    }));
+    cached = await cache.match(MODEL_URL);
+  }
+  setProc('Initializing model…');
+  const buf = await cached.arrayBuffer();
+  session = await ort.InferenceSession.create(buf, {
+    executionProviders: ['wasm'],
+    graphOptimizationLevel: 'all'
+  });
+  return session;
+}
+
+async function removeBg(bitmap) {
+  const sess = await loadSession();
+  const c = document.createElement('canvas');
+  c.width = c.height = INPUT;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(bitmap, 0, 0, INPUT, INPUT);
+  const { data } = ctx.getImageData(0, 0, INPUT, INPUT);
+
+  const N = INPUT * INPUT;
+  const input = new Float32Array(3 * N);
+  const mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225];
+  for (let i = 0; i < N; i++) {
+    input[i]        = (data[i * 4]     / 255 - mean[0]) / std[0];
+    input[N + i]    = (data[i * 4 + 1] / 255 - mean[1]) / std[1];
+    input[2 * N + i]= (data[i * 4 + 2] / 255 - mean[2]) / std[2];
+  }
+
+  const t = new ort.Tensor('float32', input, [1, 3, INPUT, INPUT]);
+  const out = await sess.run({ [sess.inputNames[0]]: t });
+  const mask = out[sess.outputNames[0]].data;
+
+  let mn = Infinity, mx = -Infinity;
+  for (let i = 0; i < mask.length; i++) {
+    if (mask[i] < mn) mn = mask[i];
+    if (mask[i] > mx) mx = mask[i];
+  }
+  const rng = (mx - mn) || 1;
+
+  const mCan = document.createElement('canvas');
+  mCan.width = mCan.height = INPUT;
+  const mctx = mCan.getContext('2d');
+  const mimg = mctx.createImageData(INPUT, INPUT);
+  for (let i = 0; i < N; i++) mimg.data[i * 4 + 3] = ((mask[i] - mn) / rng) * 255;
+  mctx.putImageData(mimg, 0, 0);
+
+  const W = bitmap.width, H = bitmap.height;
+  const outC = document.createElement('canvas');
+  outC.width = W; outC.height = H;
+  const octx = outC.getContext('2d');
+  octx.drawImage(mCan, 0, 0, W, H);
+  octx.globalCompositeOperation = 'source-in';
+  octx.drawImage(bitmap, 0, 0, W, H);
+  octx.globalCompositeOperation = 'source-over';
+  return outC;
+}
+
+/* ---------------- WHITE 1:1 ---------------- */
+function whiteSquare(src) {
+  const W = src.width, H = src.height;
+  const sc = Math.min(1, SCAN_MAX / Math.max(W, H));
+  const sw = Math.max(1, Math.round(W * sc)), sh = Math.max(1, Math.round(H * sc));
+  const s = document.createElement('canvas');
+  s.width = sw; s.height = sh;
+  const sctx = s.getContext('2d', { willReadFrequently: true });
+  sctx.drawImage(src, 0, 0, sw, sh);
+  const px = sctx.getImageData(0, 0, sw, sh).data;
+
+  let mnX = sw, mnY = sh, mxX = -1, mxY = -1;
+  for (let y = 0; y < sh; y++) {
+    const r = y * sw * 4;
+    for (let x = 0; x < sw; x++) {
+      if (px[r + x * 4 + 3] > ALPHA_MIN) {
+        if (x < mnX) mnX = x;
+        if (x > mxX) mxX = x;
+        if (y < mnY) mnY = y;
+        if (y > mxY) mxY = y;
+      }
+    }
+  }
+  if (mxX < 0) { mnX = 0; mnY = 0; mxX = sw - 1; mxY = sh - 1; }
+
+  const inv = 1 / sc;
+  mnX = Math.max(0, Math.floor(mnX * inv) - 1);
+  mnY = Math.max(0, Math.floor(mnY * inv) - 1);
+  mxX = Math.min(W - 1, Math.ceil(mxX * inv) + 1);
+  mxY = Math.min(H - 1, Math.ceil(mxY * inv) + 1);
+
+  const bw = mxX - mnX + 1, bh = mxY - mnY + 1;
+  const cx = (mnX + mxX + 1) / 2, cy = (mnY + mxY + 1) / 2;
+  const side = Math.max(bw, bh) * (1 + PAD * 2);
+  const S = Math.max(1, Math.min(Math.round(side), MAX_SIDE));
+  const k = S / side;
+
+  const out = document.createElement('canvas');
+  out.width = out.height = S;
+  const octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = 'high';
+  octx.fillStyle = '#ffffff';
+  octx.fillRect(0, 0, S, S);
+  octx.drawImage(src, S / 2 - cx * k, S / 2 - cy * k, W * k, H * k);
+  return out;
+}
+
+/* ---------------- PROCESS ---------------- */
+processBtn.addEventListener('click', async () => {
+  if (!originalFile) return;
+  processBtn.disabled = true;
+  publishBtn.disabled = true;
+  resultDiv.style.display = 'none';
+  dlQRBtn.disabled = true;
+  openValBtn.disabled = true;
+  setProc('');
+  setBar(0.02);
+
+  try {
+    setProc('Step 1/4 — compressing input to ≤ 90 KB…');
+    const comp = await compressToTarget(originalFile, TARGET_BYTES, 1200);
+    setBar(0.20);
+
+    setProc(`Step 2/4 — removing background (input ${(comp.size / 1024).toFixed(0)} KB)…`);
+    const bitmap = await createImageBitmap(comp.blob);
+    const cut = await removeBg(bitmap);
+    bitmap.close?.();
+    setBar(0.65);
+
+    setProc('Step 3/4 — cropping to white 1:1…');
+    const square = whiteSquare(cut);
+    setBar(0.85);
+
+    setProc('Step 4/4 — compressing final to ≤ 90 KB…');
+    const finalBlob = await new Promise((res) => {
+      (async () => {
+        for (let q = 0.9; q >= 0.4; q -= 0.08) {
+          const b = await new Promise(r => square.toBlob(r, 'image/jpeg', q));
+          if (b && b.size <= TARGET_BYTES) return res(b);
+        }
+        square.toBlob(r => res(r), 'image/jpeg', 0.35);
+      })();
+    });
+
+    processedBlob = finalBlob;
+    if (processedURL) URL.revokeObjectURL(processedURL);
+    processedURL = URL.createObjectURL(finalBlob);
+    finalPreview.src = processedURL;
+
+    setBar(1);
+    setProc(`Done — ${square.width}×${square.height} px · ${(finalBlob.size / 1024).toFixed(1)} KB`, 'ok');
+    publishBtn.disabled = false;
+    fillCertificate();
+  } catch (err) {
+    console.error(err);
+    setProc('❌ ' + (err?.message || err), 'err');
+    procBar.style.display = 'none';
+  } finally {
+    processBtn.disabled = false;
+  }
+});
+
+/* ---------------- GITHUB ---------------- */
+async function ghGetRepo(pat) {
+  const r = await fetch(`https://api.github.com/repos/${REPO_FULL}`, {
+    headers: { 'Authorization': `Bearer ${pat}`, 'Accept': 'application/vnd.github+json' }
+  });
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return await r.json();
+}
+
+async function ghPutFile(pat, path, base64, message) {
+  const url = `https://api.github.com/repos/${REPO_FULL}/contents/${path}`;
+  let sha = null;
+  const check = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${pat}`, 'Accept': 'application/vnd.github+json' }
+  });
+  if (check.ok) sha = (await check.json()).sha;
+  else if (check.status !== 404) throw new Error(`check ${path}: ${check.status}`);
+
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${pat}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    body: JSON.stringify({ message, content: base64, ...(sha ? { sha } : {}) })
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(`${path}: ${res.status} ${e.message || ''}`);
+  }
+  return await res.json();
+}
+
+async function blobToBase64(blob) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const s = fr.result;
+      res(s.substring(s.indexOf(',') + 1));
+    };
+    fr.onerror = rej;
+    fr.readAsDataURL(blob);
+  });
+}
+
+/* ---------------- TEST CONNECTION ---------------- */
+testConnBtn.addEventListener('click', async () => {
+  const pat = patEl.value.trim();
+  connStatus.textContent = 'Testing…'; connStatus.className = 'status';
+  if (!pat) { connStatus.textContent = '❌ PAT required'; connStatus.className = 'status err'; return; }
+  try {
+    const data = await ghGetRepo(pat);
+    connStatus.textContent = `✓ Connected to ${data.full_name}`;
+    connStatus.className = 'status ok';
+  } catch (err) {
+    connStatus.textContent = '❌ ' + err.message;
+    connStatus.className = 'status err';
+  }
+});
+
+/* ---------------- PUBLISH ---------------- */
+publishBtn.addEventListener('click', async () => {
+  const pat = patEl.value.trim();
+  const cno = cnoEl.value.trim();
+
+  if (!pat) return setPub('❌ PAT required', 'err');
+  if (!cno) return setPub('❌ CNO required', 'err');
+  if (!processedBlob) return setPub('❌ Process an image first', 'err');
+
+  publishBtn.disabled = true;
+  setPub('Uploading image…');
+
+  try {
+    const imgB64 = await blobToBase64(processedBlob);
+    await ghPutFile(pat, `${BEADS_BASE}/${cno}/image.jpg`, imgB64, `Add image for ${cno}`);
+
+    setPub('Uploading data.json…');
+    const data = {
+      cno,
+      itemName: itemNameEl.value.trim() || `Natural ${facesEl.value || 1} Face Rudraksha`,
+      weight: weightEl.value.trim(),
+      shape: shapeEl.value.trim(),
+      color: colorEl.value.trim(),
+      measurement: measurementEl.value.trim(),
+      mount: mountEl.value.trim(),
+      faces: facesEl.value.trim() || '1',
+      xrays: xraysEl.value.trim(),
+      createdFaces: createdFacesEl.value.trim(),
+      test: testEl.value.trim(),
+      comments: commentsEl.value.trim(),
+      image: 'image.jpg',
+      updatedAt: new Date().toISOString()
+    };
+    const jsonBlob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const jsonB64 = await blobToBase64(jsonBlob);
+    await ghPutFile(pat, `${BEADS_BASE}/${cno}/data.json`, jsonB64, `Add data for ${cno}`);
+
+    const valUrl = `${PAGES_BASE}/index.html?cno=${encodeURIComponent(cno)}`;
+    valUrlEl.textContent = valUrl;
+    valUrlEl.href = valUrl;
+    resultDiv.style.display = 'flex';
+    dlQRBtn.disabled = false;
+    openValBtn.disabled = false;
+
+    await fillCertificate();
+    setPub(`✓ Published — live at: ${valUrl}`, 'ok');
+  } catch (err) {
+    console.error(err);
+    setPub('❌ ' + (err?.message || err), 'err');
+  } finally {
+    publishBtn.disabled = false;
+  }
+});
+
+/* ---------------- QR DOWNLOAD / OPEN ---------------- */
+dlQRBtn.addEventListener('click', async () => {
+  const cno = cnoEl.value.trim();
+  if (!cno) return;
+  const url = `${PAGES_BASE}/index.html?cno=${encodeURIComponent(cno)}`;
+  const dataUrl = await QRCode.toDataURL(url, { width: 600, margin: 2 });
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = `${cno}-qr.png`;
+  a.click();
+});
+openValBtn.addEventListener('click', () => {
+  const url = valUrlEl.textContent;
+  if (url) window.open(url, '_blank', 'noopener');
+});
+
+/* ---------------- DOWNLOAD CERTIFICATE AS PNG ---------------- */
+dlPngBtn.addEventListener('click', async () => {
+  if (typeof html2canvas === 'undefined') {
+    setPng('❌ html2canvas not loaded', 'err');
+    return;
+  }
+
+  dlPngBtn.disabled = true;
+  setPng('Rendering certificate at 3×…');
+
+  /* temporarily expand wrapper & reset scale for full-resolution capture */
+  const prevTransform = certificateEl.style.transform;
+  const prevWrapW = certWrap.style.width;
+  const prevWrapH = certWrap.style.height;
+  const prevOverflow = certWrap.style.overflow;
+  const prevBoxShadow = certWrap.style.boxShadow;
+
+  certificateEl.style.transform = 'none';
+  certWrap.style.width = '1009px';
+  certWrap.style.height = '639px';
+  certWrap.style.overflow = 'visible';
+  certWrap.style.boxShadow = 'none';
+
+  /* let the layout settle + images finish decoding */
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  await new Promise(r => setTimeout(r, 120));
+
+  try {
+    const canvas = await html2canvas(certificateEl, {
+      width: 1009,
+      height: 639,
+      scale: 3,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      windowWidth: 1009,
+      windowHeight: 639,
+    });
+
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    if (!blob) throw new Error('PNG export failed');
+
+    const cno = cnoEl.value.trim() || 'bead';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${cno}-certificate.png`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+    setPng(`✓ Saved — ${canvas.width}×${canvas.height} px · ${(blob.size / 1024).toFixed(0)} KB`, 'ok');
+  } catch (err) {
+    console.error(err);
+    setPng('❌ ' + (err?.message || err), 'err');
+  } finally {
+    certificateEl.style.transform = prevTransform;
+    certWrap.style.width = prevWrapW;
+    certWrap.style.height = prevWrapH;
+    certWrap.style.overflow = prevOverflow;
+    certWrap.style.boxShadow = prevBoxShadow;
+    dlPngBtn.disabled = false;
+  }
+});
+
+/* ---------------- BOOT ---------------- */
+fillCertificate();
+loadSession()
+  .then(() => setProc('Model ready — pick an image.'))
+  .catch(e => console.warn('Preload failed:', e));
+</script>
+</body>
+</html>
