@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rudraksha Bead Uploader</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0f1115; --card:#181b22; --card2:#12151c; --fg:#e9edf3; --mut:#8b93a3;
@@ -109,18 +112,25 @@
     width:100%; height:100%; object-fit:contain; display:block;
   }
 
+  /* TITLE */
   .certificate .title-block{
-    position:absolute; top:46px; left:198px; width:575px;
+    position:absolute; top:42px;
+    left: 205px; right: 210px;
+    text-align: center;
   }
   .certificate .lab-name{
-    font-family:"Arial Black","Arial Bold",Arial,Helvetica,sans-serif;
-    font-size:33px; font-weight:900; line-height:1;
-    letter-spacing:-1.2px; color:#d4202f; white-space:nowrap;
+    font-family: "Outfit", "Poppins", "Plus Jakarta Sans", "Arial Black", Arial, sans-serif;
+    font-size: 38px;
+    font-weight: 700;
+    line-height:1;
+    letter-spacing:-1px;
+    color:#d4202f;
+    white-space:nowrap;
   }
   .certificate .iso-line{
-    font-family:Arial,Helvetica,sans-serif;
-    font-size:23px; font-weight:400; letter-spacing:-0.4px;
-    color:#d4202f; margin-top:10px; text-align:center; white-space:nowrap;
+    font-family: "Outfit", Arial, Helvetica, sans-serif;
+    font-size:32px; font-weight:400; letter-spacing:0.2px;
+    color:#d4202f; margin-top:12px; text-align:center; white-space:nowrap;
   }
 
   .certificate .qr-placeholder{
@@ -134,18 +144,14 @@
     display:block; object-fit:contain;
   }
 
-  /* LAB TESTED — 90° ANTICLOCKWISE rotation.
-     The text is horizontal by default. We anchor it at the BOTTOM-LEFT
-     of the desired vertical strip, then rotate -90° around that anchor.
-     Result: text grows upward, L at bottom, D at top, letters rotated
-     so they read normally when the paper is rotated 90° clockwise. */
+  /* LAB TESTED — Archivo Black, big, rotated 90° anticlockwise */
   .certificate .lab-tested{
     position: absolute;
     left: 18px;
-    top: 556px;
+    top: 528px;
     transform-origin: 0 0;
     transform: rotate(-90deg);
-    font-family: "Arial Black", "Arial Bold", Arial, Helvetica, sans-serif;
+    font-family: "Archivo Black", "Arial Black", Arial, Helvetica, sans-serif;
     font-size: 38px;
     font-weight: 900;
     letter-spacing: 2px;
@@ -177,24 +183,37 @@
     line-height:1; margin-top:8px; word-break:break-all;
   }
 
+  /* SPEC BLOCK — bigger font (26px), tighter line-height (31px) */
   .certificate .spec-block{
-    position:absolute; top:240px; right:16px; width:400px;
-    text-align:right; font-size:20px; line-height:30px;
+    position:absolute; top: 227px; right: 14px; width: 540px;
+    font-size: 26px; line-height: 31px;
   }
   .certificate .spec-block .row{
-    line-height:30px; margin:0; padding:0; white-space:nowrap;
+    display: block;
+    text-align: right;
+    line-height: 31px;
+    margin:0; padding:0;
+    white-space:nowrap;
   }
-  .certificate .spec-block .label{ font-weight:800; color:#111111; }
-  .certificate .spec-block .value{ font-weight:400; color:#111111; }
+  .certificate .spec-block .label{
+    font-weight:800; font-size: 26px; color:#111111;
+    line-height: 31px;
+    margin-right: 6px;
+  }
+  .certificate .spec-block .value{
+    font-weight:800; font-size: 26px; color:#111111;
+    line-height: 31px;
+  }
 
+  /* BANNER — thick + big */
   .certificate .banner{
     position:absolute; bottom:0; left:0;
-    width:1009px; height:56px;
+    width:1009px; height:76px;
     background:#9e1218;
-    display:flex; align-items:center; padding-left:32px;
+    display:flex; align-items:center; padding-left:42px;
   }
   .certificate .banner span{
-    color:#ffffff; font-size:31px; font-weight:800; letter-spacing:-0.5px; white-space:nowrap;
+    color:#ffffff; font-size:40px; font-weight:800; letter-spacing:-0.6px; white-space:nowrap;
   }
 
   @media print {
@@ -880,6 +899,10 @@ dlPngBtn.addEventListener('click', async () => {
     if (expectedUrl !== lastQRUrl) fillCertificate();
   }
 
+  try {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+  } catch (e) {}
+
   const prevTransform = certificateEl.style.transform;
   const prevWrapW = certWrap.style.width;
   const prevWrapH = certWrap.style.height;
@@ -930,7 +953,7 @@ dlPngBtn.addEventListener('click', async () => {
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
 
-    setPng(`✓ Saved ${fname} — ${canvas.width}×${canvas.height} px · ${(blob.size / 1024).toFixed(0)} KB`, 'ok');
+    setPng(`✓ Saved ${fname} — ${canvas.width}×${canvas.height}px · ${(blob.size / 1024).toFixed(0)} KB`, 'ok');
   } catch (err) {
     console.error(err);
     setPng('❌ ' + (err?.message || err), 'err');
