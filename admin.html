@@ -98,7 +98,7 @@
   }
   .certificate *{ margin:0; padding:0; box-sizing:border-box; }
 
-  /* LOGO — no border now */
+  /* LOGO — no border */
   .certificate .logo-placeholder{
     position:absolute; top:12px; left:12px;
     width:170px; height:170px;
@@ -124,7 +124,7 @@
     color:#d4202f; margin-top:10px; text-align:center; white-space:nowrap;
   }
 
-  /* QR — right side of title, no dashed border */
+  /* QR — clean, no border */
   .certificate .qr-placeholder{
     position:absolute; top:14px; right:16px;
     width:205px; height:205px;
@@ -132,23 +132,25 @@
     background:#fff;
   }
   .certificate .qr-placeholder img{
-    width:185px !important;
-    height:185px !important;
+    width:185px;
+    height:185px;
     display:block;
     object-fit:contain;
   }
 
+  /* LAB TESTED — reads top-to-bottom, no rotate */
   .certificate .lab-tested{
     position:absolute; top:276px; left:18px;
-    writing-mode:vertical-rl; transform:rotate(180deg);
+    writing-mode: vertical-rl;
     font-family:"Arial Black","Arial Bold",Arial,Helvetica,sans-serif;
     font-size:38px; font-weight:900; letter-spacing:2px; line-height:1;
     color:#d4202f; white-space:nowrap;
   }
 
+  /* PRODUCT IMAGE — 270 × 270, aligned left with CNO */
   .certificate .product-image-placeholder{
-    position:absolute; top:226px; left:148px;
-    width:362px; height:252px;
+    position:absolute; top:208px; left:148px;
+    width:270px; height:270px;
     background:#eef0f2; border:1px solid #dddddd;
     display:flex; align-items:center; justify-content:center;
     text-align:center; color:#999999; font-size:13px; font-weight:bold; line-height:1.25;
@@ -214,7 +216,6 @@
     <b>Beads path:</b> <code>Bead-verify/Beads/{CNO}/</code>
   </div>
 
-  <!-- ===== 1. GitHub Access ===== -->
   <section class="card no-print">
     <h2>1 · GitHub Access</h2>
     <label>Fine-grained PAT
@@ -227,7 +228,6 @@
     <div class="hint">PAT needs <b>Contents: Read &amp; Write</b> on <code>rudraksha-lab/Bead-verify</code>. Stored only in this tab's memory.</div>
   </section>
 
-  <!-- ===== 2. Bead data ===== -->
   <section class="card no-print">
     <h2>2 · Bead Data</h2>
     <div class="grid">
@@ -246,7 +246,6 @@
     </div>
   </section>
 
-  <!-- ===== 3. Image ===== -->
   <section class="card no-print">
     <h2>3 · Image</h2>
     <input type="file" id="file" accept="image/*">
@@ -262,7 +261,6 @@
     <div class="status" id="procStatus"></div>
   </section>
 
-  <!-- ===== 4. Publish ===== -->
   <section class="card no-print">
     <h2>4 · Publish</h2>
     <div class="row">
@@ -279,45 +277,37 @@
     </div>
   </section>
 
-  <!-- ===== 5. Certificate ===== -->
   <section class="card certSection">
     <h2 class="no-print">5 · Certificate (live preview)</h2>
     <div class="certScroll">
       <div class="certWrap" id="certWrap">
         <div class="certificate" id="certificate">
 
-          <!-- LOGO (no border) -->
           <div class="logo-placeholder">
             <img src="./Logo.png" alt="Logo"
                  onerror="this.style.display='none';this.parentElement.textContent='LOGO';">
           </div>
 
-          <!-- QR (right side of title, real QR image) -->
           <div class="qr-placeholder">
             <img id="certQR" alt="QR" style="display:none;">
           </div>
 
-          <!-- TITLE -->
           <div class="title-block">
             <div class="lab-name">Rudraksha &amp; Gems Testing Lab.</div>
             <div class="iso-line">ISO 9001:2015 Certified Lab</div>
           </div>
 
-          <!-- VERTICAL LABEL -->
           <div class="lab-tested">LAB TESTED</div>
 
-          <!-- PRODUCT IMAGE -->
           <div class="product-image-placeholder" id="certImgPh">
             <img id="certImg" alt="" style="display:none;">
           </div>
 
-          <!-- CNO -->
           <div class="cno-block">
             <div class="cno-label">CNO:</div>
             <div class="cno-number" id="certCno">—</div>
           </div>
 
-          <!-- SPECS -->
           <div class="spec-block">
             <div class="row"><span class="label">Weight (Grams):</span> <span class="value" id="certWeight">—</span></div>
             <div class="row"><span class="label">Shape:</span> <span class="value" id="certShape">—</span></div>
@@ -331,7 +321,6 @@
             <div class="row"><span class="label">Comments:</span> <span class="value" id="certComments">—</span></div>
           </div>
 
-          <!-- BANNER -->
           <div class="banner">
             <span id="certBanner">Identified As : —</span>
           </div>
@@ -347,8 +336,8 @@
   </section>
 </main>
 
-<!-- QR + html2canvas libraries -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<!-- QR (qrcode-generator — classic, synchronous) + html2canvas -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script type="module">
@@ -416,6 +405,33 @@ function formatFaces(n) {
   return `${FACE_WORDS[num] || num} (${num})`;
 }
 
+/* ---------------- QR VIA qrcode-generator (synchronous, real PNG) ---------------- */
+function generateQRDataURL(text, targetSize = 740) {
+  // type 0 = auto, 'M' = medium error correction
+  const qr = qrcode(0, 'M');
+  qr.addData(text);
+  qr.make();
+
+  const moduleCount = qr.getModuleCount();
+  const cellSize = Math.max(1, Math.floor(targetSize / moduleCount));
+  const finalSize = moduleCount * cellSize;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = finalSize;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, finalSize, finalSize);
+  ctx.fillStyle = '#000000';
+  for (let row = 0; row < moduleCount; row++) {
+    for (let col = 0; col < moduleCount; col++) {
+      if (qr.isDark(row, col)) {
+        ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+      }
+    }
+  }
+  return canvas.toDataURL('image/png');
+}
+
 /* ---------------- ITEM NAME AUTO ---------------- */
 function syncItemName(force = false) {
   const auto = `Natural ${facesEl.value || 1} Face Rudraksha`;
@@ -431,7 +447,7 @@ itemNameEl.addEventListener('input', () => {
 syncItemName(true);
 
 /* ---------------- FILL CERTIFICATE ---------------- */
-async function fillCertificate() {
+function fillCertificate() {
   const cno = cnoEl.value.trim();
   const faces = facesEl.value || '1';
   const itemName = itemNameEl.value.trim() || `Natural ${faces} Face Rudraksha`;
@@ -460,19 +476,20 @@ async function fillCertificate() {
     certImgPh.style.background = '#eef0f2';
   }
 
-  /* --- QR image (right of title) --- */
+  /* QR — synchronous, right next to title */
   const qrImg = document.getElementById('certQR');
-  if (cno && typeof QRCode !== 'undefined') {
+  if (cno && typeof qrcode !== 'undefined') {
     const url = `${PAGES_BASE}/index.html?cno=${encodeURIComponent(cno)}`;
     if (url !== lastQRUrl) {
       try {
-        // 740px source → crisp at 3× PNG export
-        const dataUrl = await QRCode.toDataURL(url, { width: 740, margin: 1 });
+        const dataUrl = generateQRDataURL(url, 740);
         qrImg.src = dataUrl;
         qrImg.style.display = 'block';
-        await qrImg.decode().catch(() => {});
         lastQRUrl = url;
-      } catch (e) { console.warn('QR:', e); }
+      } catch (e) {
+        console.warn('QR:', e);
+        qrImg.style.display = 'none';
+      }
     }
   } else {
     qrImg.style.display = 'none';
@@ -835,7 +852,7 @@ publishBtn.addEventListener('click', async () => {
     dlQRBtn.disabled = false;
     openValBtn.disabled = false;
 
-    await fillCertificate();
+    fillCertificate();
     setPub(`✓ Published — live at: ${valUrl}`, 'ok');
   } catch (err) {
     console.error(err);
@@ -846,11 +863,11 @@ publishBtn.addEventListener('click', async () => {
 });
 
 /* ---------------- QR DOWNLOAD / OPEN ---------------- */
-dlQRBtn.addEventListener('click', async () => {
+dlQRBtn.addEventListener('click', () => {
   const cno = cnoEl.value.trim();
   if (!cno) return;
   const url = `${PAGES_BASE}/index.html?cno=${encodeURIComponent(cno)}`;
-  const dataUrl = await QRCode.toDataURL(url, { width: 600, margin: 2 });
+  const dataUrl = generateQRDataURL(url, 1200);
   const a = document.createElement('a');
   a.href = dataUrl;
   a.download = `${cno}-qr.png`;
@@ -871,21 +888,15 @@ dlPngBtn.addEventListener('click', async () => {
   dlPngBtn.disabled = true;
   setPng('Preparing…');
 
-  /* Force QR to regenerate if CNO exists but QR is missing/stale */
   const cno = cnoEl.value.trim();
+
+  /* Ensure QR is up to date */
   if (cno) {
     const expectedUrl = `${PAGES_BASE}/index.html?cno=${encodeURIComponent(cno)}`;
-    if (expectedUrl !== lastQRUrl) {
-      await fillCertificate();
-    }
-    // Wait for QR img to be fully loaded
-    const qrImg = document.getElementById('certQR');
-    if (qrImg.src) {
-      try { await qrImg.decode(); } catch {}
-    }
+    if (expectedUrl !== lastQRUrl) fillCertificate();
   }
 
-  /* Temporarily expand for full-resolution capture */
+  /* Temporarily expand for full-res capture */
   const prevTransform = certificateEl.style.transform;
   const prevWrapW = certWrap.style.width;
   const prevWrapH = certWrap.style.height;
@@ -898,10 +909,20 @@ dlPngBtn.addEventListener('click', async () => {
   certWrap.style.overflow = 'visible';
   certWrap.style.boxShadow = 'none';
 
-  /* Wait for layout + image decoding */
+  /* Wait for layout + images to fully decode */
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-  await new Promise(r => setTimeout(r, 200));
 
+  const imgs = Array.from(certificateEl.querySelectorAll('img'));
+  await Promise.all(imgs.map(img => {
+    if (!img.src) return Promise.resolve();
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise(res => {
+      img.onload = img.onerror = () => res();
+      setTimeout(res, 800);
+    });
+  }));
+
+  await new Promise(r => setTimeout(r, 120));
   setPng('Rendering at 3×…');
 
   try {
@@ -911,7 +932,6 @@ dlPngBtn.addEventListener('click', async () => {
       scale: 3,
       backgroundColor: '#ffffff',
       useCORS: true,
-      allowTaint: true,
       logging: false,
       windowWidth: 1009,
       windowHeight: 639,
