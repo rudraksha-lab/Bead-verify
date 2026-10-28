@@ -98,10 +98,10 @@
   }
   .certificate *{ margin:0; padding:0; box-sizing:border-box; }
 
+  /* LOGO — no border now */
   .certificate .logo-placeholder{
     position:absolute; top:12px; left:12px;
     width:170px; height:170px;
-    border:2px dashed #c9a24a;
     display:flex; align-items:center; justify-content:center;
     text-align:center; color:#c9a24a; font-size:13px; font-weight:bold; line-height:1.25;
     overflow:hidden;
@@ -124,15 +124,18 @@
     color:#d4202f; margin-top:10px; text-align:center; white-space:nowrap;
   }
 
+  /* QR — right side of title, no dashed border */
   .certificate .qr-placeholder{
     position:absolute; top:14px; right:16px;
     width:205px; height:205px;
-    border:1px solid #eee;
     display:flex; align-items:center; justify-content:center;
     background:#fff;
   }
-  .certificate .qr-placeholder canvas{
-    width:185px; height:185px; display:block;
+  .certificate .qr-placeholder img{
+    width:185px !important;
+    height:185px !important;
+    display:block;
+    object-fit:contain;
   }
 
   .certificate .lab-tested{
@@ -186,7 +189,6 @@
     color:#ffffff; font-size:31px; font-weight:800; letter-spacing:-0.5px; white-space:nowrap;
   }
 
-  /* ========== PRINT ========== */
   @media print {
     body { background:#fff !important; padding:0 !important; }
     .no-print { display:none !important; }
@@ -284,15 +286,15 @@
       <div class="certWrap" id="certWrap">
         <div class="certificate" id="certificate">
 
-          <!-- LOGO -->
+          <!-- LOGO (no border) -->
           <div class="logo-placeholder">
             <img src="./Logo.png" alt="Logo"
                  onerror="this.style.display='none';this.parentElement.textContent='LOGO';">
           </div>
 
-          <!-- QR -->
+          <!-- QR (right side of title, real QR image) -->
           <div class="qr-placeholder">
-            <canvas id="certQR" width="185" height="185"></canvas>
+            <img id="certQR" alt="QR" style="display:none;">
           </div>
 
           <!-- TITLE -->
@@ -397,6 +399,7 @@ let session = null;
 let originalFile = null;
 let processedBlob = null;
 let processedURL = null;
+let lastQRUrl = '';
 
 /* ---------------- HELPERS ---------------- */
 const setProc = (t, cls = '') => { procStatus.textContent = t; procStatus.className = 'status ' + cls; };
@@ -457,11 +460,24 @@ async function fillCertificate() {
     certImgPh.style.background = '#eef0f2';
   }
 
+  /* --- QR image (right of title) --- */
+  const qrImg = document.getElementById('certQR');
   if (cno && typeof QRCode !== 'undefined') {
     const url = `${PAGES_BASE}/index.html?cno=${encodeURIComponent(cno)}`;
-    try {
-      await QRCode.toCanvas(document.getElementById('certQR'), url, { width: 185, margin: 1 });
-    } catch (e) { console.warn('QR:', e); }
+    if (url !== lastQRUrl) {
+      try {
+        // 740px source → crisp at 3× PNG export
+        const dataUrl = await QRCode.toDataURL(url, { width: 740, margin: 1 });
+        qrImg.src = dataUrl;
+        qrImg.style.display = 'block';
+        await qrImg.decode().catch(() => {});
+        lastQRUrl = url;
+      } catch (e) { console.warn('QR:', e); }
+    }
+  } else {
+    qrImg.style.display = 'none';
+    qrImg.removeAttribute('src');
+    lastQRUrl = '';
   }
 }
 
@@ -853,9 +869,23 @@ dlPngBtn.addEventListener('click', async () => {
   }
 
   dlPngBtn.disabled = true;
-  setPng('Rendering certificate at 3×…');
+  setPng('Preparing…');
 
-  /* temporarily expand wrapper & reset scale for full-resolution capture */
+  /* Force QR to regenerate if CNO exists but QR is missing/stale */
+  const cno = cnoEl.value.trim();
+  if (cno) {
+    const expectedUrl = `${PAGES_BASE}/index.html?cno=${encodeURIComponent(cno)}`;
+    if (expectedUrl !== lastQRUrl) {
+      await fillCertificate();
+    }
+    // Wait for QR img to be fully loaded
+    const qrImg = document.getElementById('certQR');
+    if (qrImg.src) {
+      try { await qrImg.decode(); } catch {}
+    }
+  }
+
+  /* Temporarily expand for full-resolution capture */
   const prevTransform = certificateEl.style.transform;
   const prevWrapW = certWrap.style.width;
   const prevWrapH = certWrap.style.height;
@@ -868,9 +898,11 @@ dlPngBtn.addEventListener('click', async () => {
   certWrap.style.overflow = 'visible';
   certWrap.style.boxShadow = 'none';
 
-  /* let the layout settle + images finish decoding */
+  /* Wait for layout + image decoding */
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-  await new Promise(r => setTimeout(r, 120));
+  await new Promise(r => setTimeout(r, 200));
+
+  setPng('Rendering at 3×…');
 
   try {
     const canvas = await html2canvas(certificateEl, {
@@ -888,15 +920,15 @@ dlPngBtn.addEventListener('click', async () => {
     const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
     if (!blob) throw new Error('PNG export failed');
 
-    const cno = cnoEl.value.trim() || 'bead';
+    const fname = (cno || 'bead') + '-certificate.png';
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${cno}-certificate.png`;
+    a.download = fname;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
 
-    setPng(`✓ Saved — ${canvas.width}×${canvas.height} px · ${(blob.size / 1024).toFixed(0)} KB`, 'ok');
+    setPng(`✓ Saved ${fname} — ${canvas.width}×${canvas.height} px · ${(blob.size / 1024).toFixed(0)} KB`, 'ok');
   } catch (err) {
     console.error(err);
     setPng('❌ ' + (err?.message || err), 'err');
